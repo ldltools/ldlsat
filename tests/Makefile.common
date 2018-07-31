@@ -1,0 +1,77 @@
+# -*-makefile-*-
+# $Id: Makefile.common,v 1.1 2017/11/14 07:10:57 sato Exp $
+
+TOP_DIR		?= $(shell readlink -f ..)
+BUILD_DIR	?= $(TOP_DIR)/_build/caml
+SCRIPTS_DIR	?= $(TOP_DIR)/scripts
+
+LDL2MSO		?= $(BUILD_DIR)/ldl2mso.byte
+LDL2AFW		?= $(BUILD_DIR)/ldl2afw.byte
+LDL2RE		?= $(BUILD_DIR)/ldl2re.byte
+RE2MSO		?= $(BUILD_DIR)/re2mso.byte
+AFWPRINT	?= $(BUILD_DIR)/afwprint.byte
+
+MSO2DFA		?= $(SCRIPTS_DIR)/mso2dfa.sh
+DFA2DFA		?= $(SCRIPTS_DIR)/dfa2dfa.sh
+DFA2DOT		?= $(SCRIPTS_DIR)/dfa2dot.sh
+
+SHELL		:= /bin/bash
+MONA		?= mona
+AWK		?= awk
+SED		?= sed
+XMLLINT		?= xmllint
+
+all::
+check::
+	test -x $(LDL2MSO)   || exit 1
+	test -x $(LDL2AFW)   || exit 1
+
+# ================================================================================
+# LDL/RE/MSO
+# ================================================================================
+
+# LDL
+%.mso:	%.ldl
+	@test -x $(LDL2MSO) || exit 1
+	$(LDL2MSO) $< -o $@ || { rm -f $@; exit 1; }
+%.re:	%.ldl
+	@test -x $(LDL2RE)  || exit 1
+	$(LDL2RE) $< -o $@  || { rm -f $@; exit 1; }
+%.afw:	%.ldl
+	@test -x $(LDL2AFW) || exit 1
+	$(LDL2AFW) $< -o $@ || { rm -f $@; exit 1; }
+
+# RE
+#%.mso:	%.re
+#	@test -x $(RE2MSO) || exit 1
+#	$(RE2MSO) $< -o $@ -t mona -v || { rm -f $@; exit 1; }
+
+# MSO
+%.mso.dot:	%.mso
+	$(MONA) -gw $< > $@
+%.dfa.xml:	%.mso
+	@test -x $(MSO2DFA) || exit 1
+	$(MSO2DFA) $< -o $@.tmp || { rm -f $@; exit 1; }
+	$(XMLLINT) --format --encode utf-8 $@.tmp > $@ && rm -f $@.tmp
+%.dfa.dot:	%.dfa.xml
+	@test -x $(DFA2DOT) || exit 1
+	$(DFA2DOT) $< -o $@ || { rm -f $@; exit 1; }
+
+# DOT
+%.png:	%.dot
+	dot -Tpng $< > $@
+%.svg:	%.dot
+	dot -Tsvg $< > $@
+
+.PRECIOUS:	%.ldl %.re %.mso %.dot
+.PRECIOUS:	%.dfa.dot %.dfa.xml %.mso.dot
+
+# ================================================================================
+# AFW
+# ================================================================================
+
+%.afw.dot:	%.afw
+	@test -x $(AFWPRINT) || exit 1
+	$(AFWPRINT) $< -o $@ -t dot || { rm -f $@; exit 1; }
+
+.PRECIOUS:	%.afw

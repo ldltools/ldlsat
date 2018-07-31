@@ -1,0 +1,8 @@
+digraph g {
+  init  [shape=point,comment=""]
+  0  [comment=""]
+  1  [style=filled,fillcolor=red,comment=""]
+  0 -> 1 [label="T"]
+  1 -> 1 [label="T"]
+  init -> 1
+}

@@ -1,0 +1,12 @@
+RCS/
+_build/
+tmp/
+obsolete/
+README.html
+*~
+*.cm*
+*.afw
+*.dfa
+*.dot
+*.png
+*.json
