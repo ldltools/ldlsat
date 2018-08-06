@@ -1,9 +1,9 @@
 # Summary
 
 [*ldlsat*](https://github.com/ldltools/ldlsat) is a SAT solver for
-[LDL](https://www.cs.rice.edu/~vardi/).
+[LDL<sub>f</sub>](https://www.cs.rice.edu/~vardi/).
 
-For each input LDL formula,
+For each input LDL<sub>f</sub> formula,
 ldlsat first translates it to
 [MSO](https://en.wikipedia.org/wiki/Monadic_second-order_logic),
 and then passes the generated (equivalent) MSO formula
@@ -11,7 +11,42 @@ to the [mona](http://www.brics.dk/mona/) tool for solving its satisfiability.
 
 # Examples
 
-&ensp; (to be filled in)
+## Propositional
+
+<pre>
+<code>
+$ echo 'a & (a -> b) -> b' | ldlsat
+valid
+$ echo 'a & !a' | ldlsat
+unsatisfiable
+</code>
+</pre>
+
+## LTL
+
+<pre>
+<code>
+$ echo '[{true}*]a -> a' | ldlsat  ## reflexitivity (T)
+valid
+$ echo '[{true}*](a -> b) -> [{true}*]a -> [{true}*]b' | ldlsat  ## distribution (K)
+valid
+$ echo 'a -> [{true}*]<{true}*>a' | ldlsat  ## symmetry (B)
+satisfiable
+</code>
+</pre>
+
+## LDL<sub>f</sub>
+
+<pre>
+<code>
+$ echo '<{a}*>a -> a' | ldlsat
+valid
+$ echo '<{a & !b}; {!a & b}>(a & last) -> [{a}*; {b}]last' | ldlsat
+valid
+$ echo '<{a}; {!b}>last & [{a}]b' | ldlsat
+unsatisfiable
+</code>
+</pre>
 
 # Installation on Debian/Ubuntu
 ## Prerequisites
@@ -48,4 +83,4 @@ In addition to the tools listed above, you also need the following:
 
 # Testing
 - run: `make -C tests dfa`  
-  DFA files generated from test cases in LDL will appear in `tests/out`
+  DFA files generated from test cases in LDL<sub>f</sub> will appear in `tests/out`
