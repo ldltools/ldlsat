@@ -15,10 +15,10 @@ to the [mona](http://www.brics.dk/mona/) tool for solving its satisfiability.
 
 # Installation on Debian/Ubuntu
 ## Prerequisites
-- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.06.1)  
+- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.07.0)  
   run: `apt-get install ocaml`  
   Alternatively, you can install a particular version of the compiler using opam  
-  run: `opam switch 4.06.1` for example
+  run: `opam switch 4.07.0` for example
 - [opam](https://opam.ocaml.org) (ocaml package manager)  
   run: `apt-get install opam`
 - ocaml packages: ocamlfind, yojson, ppx\_deriving, ppx\_deriving\_yojson  

@@ -22,16 +22,18 @@ open Ldl
  *)
 
 let rec propositional = function
-  | Ldl_atomic _ -> true
-  | Ldl_neg f -> propositional f
+  | f when literal_p f -> true
   | Ldl_conj fs | Ldl_disj fs ->
       List.fold_left (fun b f -> b && propositional f) true fs
   | Ldl_impl (f, g) -> (propositional f) && (propositional g)
   | Ldl_modal _ -> false
+  | _ -> false
 
-let literal_p = function
+(* literal = atomic formula or its negation *)
+and literal_p = function
+  | Ldl_atomic "last" -> false
   | Ldl_atomic _ -> true
-  | Ldl_neg (Ldl_atomic _) -> true
+  | Ldl_neg f -> literal_p f
   | Ldl_conj [] | Ldl_disj [] -> true
   | _ -> false
 
@@ -39,8 +41,7 @@ let literal_p = function
 let rec clause_p (c : formula) =
   (* examine if c is a disjunction of literals *)
   match c with
-  | Ldl_atomic _ -> true
-  | Ldl_neg (Ldl_atomic _) -> true
+  | _ when literal_p c -> true
   | Ldl_conj [] -> true
   | Ldl_disj disj ->
       (try let _ = List.find (fun f -> not (literal_p f)) disj in false with Not_found -> true)

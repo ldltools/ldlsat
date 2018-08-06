@@ -46,7 +46,8 @@ let rec re_of_formula f =
 
 and re_of_formula_rec f =
   match f with
-  | f' when propositional f' -> Re_prop (prop_of_formula f')
+  | _ when propositional f -> Re_prop (prop_of_formula f)
+  | Ldl_atomic "last" -> Re_prop (prop_of_formula f)  (* work-around*)
   | Ldl_neg f -> Re_neg (re_of_formula f)
   | Ldl_conj fs -> Re_inter (List.map re_of_formula_rec fs)
   | Ldl_disj fs -> Re_union (List.map re_of_formula_rec fs)
