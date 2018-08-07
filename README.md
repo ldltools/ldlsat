@@ -48,6 +48,8 @@ unsatisfiable
 </code>
 </pre>
 
+Note that formulas should conform with [this grammar](docs/README.md).
+
 # Installation on Debian/Ubuntu
 ## Prerequisites
 - [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.07.0)  

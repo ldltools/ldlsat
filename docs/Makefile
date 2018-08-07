@@ -1,4 +1,9 @@
+#
+SUBDIRS = grammar
+
 all::
-clean::
-veryclean::
+	for d in $(SUBDIRS); do make -C $$d $@ || exit 1; done
+
+clean::;	rm -f *~ \#*
+veryclean::	clean
 install::
