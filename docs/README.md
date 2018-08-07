@@ -5,7 +5,7 @@ LDL<sub>f</sub> formulas should conform to the following grammar.
 <details>
 <summary>
 LDL<sub>f</sub> grammar
-(alt: [html](grammar/grammar.html) [pdf](grammar/grammar.pdf))
+(alt: <a href="grammar/grammar.html">[html]</a> <a href="grammar/grammar.pdf">[pdf]</a>)
 </summary>
 <div><img alt="grammar" src="grammar/grammar.svg?sanitize=true"/></div>
 </details>
