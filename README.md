@@ -84,5 +84,7 @@ In addition to the tools listed above, you also need the following:
   run: `brew install remake`
 
 # Testing
+- run: `make -C tests test`  
+  run regression tests
 - run: `make -C tests dfa`  
-  DFA files generated from test cases in LDL<sub>f</sub> will appear in `tests/out`
+  generate DFA files from various formulas in LDL<sub>f</sub> in `tests/out`

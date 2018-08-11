@@ -1,3 +1,5 @@
-*.dvi
 *.aux
+*.dvi
 *.log
+*.blg
+*.out
