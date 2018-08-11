@@ -93,12 +93,12 @@ all::	$(LIBS) $(BINS)
 
 $(BUILD_DIR)/ldlsat.cma:	$(CMOS)
 	$(CAMLC) $(CAMLCFLAGS) -o $@ -a \
-	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,ldlsimp,re}.cmo \
+	$(BUILD_DIR)/{ldl,ldlsimp,ldl_l,ldl_p,re}.cmo \
 	$(BUILD_DIR)/mso/{mso,re2mso}.cmo \
 	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmo
 $(BUILD_DIR)/ldlsat.cmxa:	$(CMXS)
 	$(CAMLOPT) $(CAMLCFLAGS) -o $@ -a \
-	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,ldlsimp,re}.cmx \
+	$(BUILD_DIR)/{ldl,ldlsimp,ldl_l,ldl_p,re}.cmx \
 	$(BUILD_DIR)/mso/{mso,re2mso}.cmx \
 	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmx
 
@@ -145,11 +145,23 @@ ci::
 	  (cd $$d; echo *.ml* | xargs ci -m.);\
 	done
 
-#
-Makefile.depend::	$(SRCS_mli) $(SRCS_ml)
-	@sleep 1
-	echo "$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi" >> $@
+Makefile.depend::	$(SRCS_mli) $(SRCS_ml) $(SRCS_mll) $(SRCS_mly)
+	@n=0; missing=0;\
+	while test $$n -lt 10; do \
+	 test -s Makefile.depend || { sleep 1s; continue; };\
+	 grep -q '^# generated at' Makefile.depend || { sleep 1s; continue; };\
+	 line=`tail -1 Makefile.depend | grep '^# generated at'`;\
+	 test ."$$line" = . && exit 0;\
+	 break;\
+	done;\
+	echo "$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi" >> $@;\
 	echo "$(BUILD_DIR)/ldl_l.cmi: $(BUILD_DIR)/ldl_p.cmi" >> $@
+
+#
+#Makefile.depend::	$(SRCS_mli) $(SRCS_ml)
+#	sleep 1
+#	echo "$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi" >> $@
+#	echo "$(BUILD_DIR)/ldl_l.cmi: $(BUILD_DIR)/ldl_p.cmi" >> $@
 
 $(BUILD_DIR)/ppx:
 	$(CAMLOPT) $(CAML_INC_FLAGS) \

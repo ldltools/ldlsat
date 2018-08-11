@@ -1,0 +1,81 @@
+\documentclass[preview=true]{standalone}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\begin{document}
+\begin{table}[t]
+% --------------------------------------------------------------------------------
+\begin{align*}
+% ----------
+\text{LDL}_{f} \textit{ formula }
+  \varphi &::=
+  \varphi_1
+  \mid \varphi_1 \;\texttt{`->'}\; \varphi
+\\
+\varphi_1 &::=
+  \varphi_2
+  \mid \varphi_1 \;\texttt{`|'}\; \varphi_2
+\\
+\varphi_2 &::=
+  \varphi_3
+  \mid \varphi_2 \;\texttt{`\&'}\; \varphi_3
+\\
+\varphi_3 &::=
+  \texttt{`last'}
+  \mid \alpha
+  \mid \texttt{`!'}\; \varphi_3
+  \mid \texttt{`<'} \rho\; \texttt{`>'}\; \varphi_3
+  \mid \texttt{`['} \rho\; \texttt{`]'}\; \varphi_3
+  \mid \texttt{`('}\; \varphi \;\texttt{`)'}
+\\
+% ----------
+\textit{Regular path }
+\rho &::=
+  \rho_1
+  \mid \rho \;\texttt{`+'}\; \rho_1
+\\
+\rho_1 &::=
+  \rho_2
+  \mid \rho_1 \;\texttt{`;'}\; \rho_2
+\\
+\rho_2 &::=
+  \rho_3
+  \mid \texttt{`\{'}\; \varphi \;\texttt{`\}'} \;\texttt{`?'}
+%  \mid \texttt{`\{'}\; \varphi \;\texttt{`\}'} \;\texttt{`?'}\; \rho_3
+  \mid \rho_3 \;\texttt{`*'}
+\\
+\rho_3 &::=
+  \texttt{`\{'}\; \psi \;\texttt{`\}'}
+  \mid \texttt{`!'}\; \rho_3
+  \mid \texttt{`('}\; \rho \;\texttt{`)'}
+\\
+% ----------
+\textit{Proposition }
+\psi &::=
+  \psi_1
+  \mid \psi_1 \;\texttt{`->'}\; \psi
+\\
+\psi_1 &::=
+  \psi_2
+  \mid \psi_1 \;\texttt{`|'}\; \psi_2
+\\
+\psi_2 &::=
+  \psi_3
+  \mid \psi_2 \;\texttt{`\&'}\; \psi_3
+\\
+\psi_3 &::=
+  \alpha
+  \mid \texttt{`!'}\; \psi_3
+  \mid \texttt{`('}\; \psi \;\texttt{`)'}
+\\
+% ----------
+\textit{Atomic proposition }
+\alpha &::=
+  \texttt{`true'}
+  \mid \texttt{`false'}
+  \mid \textit{symbol}
+\end{align*}
+% --------------------------------------------------------------------------------
+\end{table}
+\smallskip
+\end{document}
