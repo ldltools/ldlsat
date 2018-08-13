@@ -26,3 +26,9 @@ rsync::	clean
 	rsync -avzop --exclude=_build --exclude=.git --exclude=out --exclude=obsolete ./ $(GITHOME)
 tar:	veryclean
 	(dir=`basename $$PWD`; cd ..; tar cvJf dsl4sc`date +%y%m%d`.tar.xz --exclude=.git --exclude=_build --exclude=RCS --exclude=obsolete $$dir)
+
+# docker
+docker_build:
+	docker build -t "ldltools/ldlsat" .
+docker_run:
+	docker run -it "ldltools/ldlsat"

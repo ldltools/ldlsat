@@ -50,6 +50,10 @@ unsatisfiable
 
 Note that formulas should conform with [this grammar](docs/README.md).
 
+# Installation on Docker
+
+- run `docker build -t ldltools/ldlsat .` in the top directory
+
 # Installation on Debian/Ubuntu
 ## Prerequisites
 - [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.07.0)  
@@ -87,4 +91,4 @@ In addition to the tools listed above, you also need the following:
 - run: `make -C tests test`  
   run regression tests
 - run: `make -C tests dfa`  
-  generate DFA files from various formulas in LDL<sub>f</sub> in `tests/out`
+  generate DFA files from various LDL<sub>f</sub> formulas into `tests/out`
