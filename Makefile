@@ -2,7 +2,7 @@
 
 #PREFIX		?= _build/install
 PREFIX		?= /usr/local
-SUBDIRS		= src scripts tests docs
+SUBDIRS		= src scripts tests
 
 all::
 	for d in $(SUBDIRS); do make -C $$d $@ || exit 1; done
