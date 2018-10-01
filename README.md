@@ -22,18 +22,25 @@ unsatisfiable
 </code>
 </pre>
 
-## LTL
+## LTL / Modal
 
 <pre>
 <code>
-$ echo '[{true}*]a -> a' | ldlsat  ## reflexitivity (T)
+$ echo '[{true}*]a -> a' | ldlsat
 valid
-$ echo '[{true}*](a -> b) -> [{true}*]a -> [{true}*]b' | ldlsat  ## distribution (K)
+$ echo '[{true}](a -> b) -> [{true}]a -> [{true}]b' | ldlsat  ## distribution (K)
 valid
-$ echo 'a -> [{true}*]<{true}*>a' | ldlsat  ## symmetry (B)
+$ echo '[{true}]a -> a' | ldlsat  ## reflexitivity (T)
+satisfiable
+$ echo 'a -> [{true}]<{true}>a' | ldlsat  ## symmetry (B)
 satisfiable
 </code>
 </pre>
+
+Note
+
+- [] and <> in LTL are equivalent with [{true}\*] and <{true}\*> in LDL, respectively.
+- [] and <> in standard propositional modal logics correspond with [{true}] and <{true}> in LDL, respectively.
 
 ## LDL<sub>f</sub>
 
