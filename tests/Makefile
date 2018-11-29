@@ -13,21 +13,21 @@ list:
 	echo -ne "`basename $$f .ldl`\t"; grep -v '^/' $$f;\
 	done
 
-test:	dfa
-	python3 check.py
+test:	test_valid test_unsat test_sat test_dfa
 
 test_valid:
-	@for f in valid/*.ldl; do \
-	  echo -ne "$$(basename $$f .ldl)\t";\
-	  test "$$(ldlsat $$f)" = valid && echo "pass" || echo "fail";\
-	done
+	$(MAKE) -C valid test
 
 test_unsat:
-	@for f in unsat/*.ldl; do \
-	  echo -ne "$$(basename $$f .ldl)\t";\
-	  test "$$(ldlsat $$f)" = unsatisfiable && echo "pass" || echo "fail";\
-	done
+	$(MAKE) -C unsat test
 
+test_sat:
+	shelltest all.conf
+
+test_dfa:	dfa
+	python3 check.py
+
+# ----------
 TOP_DIR		= $(shell readlink -f ..)
 include ./Makefile.common
 
@@ -44,7 +44,7 @@ out/%.afw:	%.ldl
 
 .PRECIOUS:	out/%.re out/%.mso out/%.afw
 
-TESTCASES_LDL	= $(shell echo test??.ldl valid/*.ldl unsat/*.ldl)
+TESTCASES_LDL	= $(shell echo test??.ldl)
 TESTCASES_DFA	= $(TESTCASES_LDL:%.ldl=out/%.mso.png)
 TESTCASES_AFW	= $(TESTCASES_LDL:%.ldl=out/%.afw.png)
 
