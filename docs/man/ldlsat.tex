@@ -1,0 +1,37 @@
+\documentclass[fancy]{article}
+\setDate{November 2018}
+\begin{document}
+
+\begin{Name}{1}{ldlsat}{author}{LDL Tools}{title}
+ldlsat -- SAT solver for LDL
+\end{Name}
+
+\section{Synopsis}
+ldlsat <option>* <infile>
+
+\section{Description}
+ldlsat reads a single LDL formula from <infile>,
+converts them to a LDL formula φ,
+examines if φ is satisfiable or not, and then
+returns either "valid" (¬φ is unsatisfiable), "satisfiable", or "unsatisfiable"
+
+\section{Options}
+\begin{description}
+\item[\Opt{-v}, \Opt{--verbose}]
+become verbose
+%
+\item[\Opt{-h}, \Opt{--help}]
+show usage
+\end{description}
+
+\section{See Also}
+ldl2mso, ldlmc
+
+\section{Author}
+\URL{https://ldltools.github.io}\\
+\Email{ldltools@outlook.com}
+
+\section{Copyright}
+(C) Copyright IBM Corp. 2018.
+
+\end{document}

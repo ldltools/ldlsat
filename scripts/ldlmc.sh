@@ -44,7 +44,7 @@ do
 	-m | --model)
 	    modelfile=$2
 	    shift ;;
-	-r | --reachability)
+	-r | --reach*)
 	    reachability=1
 	    ;;
 	-h | --help)
@@ -81,11 +81,12 @@ test -e $modelfile -a -e $infile || { echo "** error in mc"; exit 1; }
 
 # LDLGEN (model, input)
 # returns: model ⊨ input (as a single LDL formula)
+# note: "ldl2mso --parse-only" is used for removing comments
 ldlfile=`tempfile -s .ldl`
 cat <<EOF > ${ldlfile} || { echo ";; LDLGEN failed" > /dev/stderr; rm -f $ldlfile; exit 1; }
-(`cat $modelfile | ${LDL2MSO} --parse-only -t ldl`)
+(`${LDL2MSO} $modelfile --parse-only -t ldl`)
 ->
-(`cat $infile | ${LDL2MSO} --parse-only -t ldl`)
+(`${LDL2MSO} $infile --parse-only -t ldl`)
 EOF
 
 # LDLSAT
@@ -116,9 +117,9 @@ test -e $modelfile -a -e $infile || { echo "** error in ra"; exit 1; }
 # LDLSAT
 satoutfile=`tempfile -s .out`
 cat <<EOF | $LDLSAT $LDLSATOPTS > $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $satoutfile; exit 1; }
-(`cat $modelfile`)
+(`${LDL2MSO} $modelfile --parse-only -t ldl`)
 &
-(`cat $infile`)
+(`${LDL2MSO} $infile --parse-only -t ldl`)
 EOF
 
 success=0
