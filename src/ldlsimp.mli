@@ -27,6 +27,7 @@ val resolve : formula -> formula
 
 val simp : formula -> formula
 val simp_flatten : formula -> formula
+val simp_equiv : formula -> formula
 val simp_sort : formula -> formula
 val simp_uniq : formula -> formula
 

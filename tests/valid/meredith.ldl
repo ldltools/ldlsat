@@ -1,0 +1,3 @@
+// meredith's sole axiom
+// http://us.metamath.org/mpegif/meredith.html
+((((a -> b) -> (!c -> !d)) -> c) -> e) -> (e -> a) -> (d -> a)

@@ -5,18 +5,18 @@ PREFIX		?= /usr/local
 SUBDIRS		= src scripts tests
 
 all::
-	for d in $(SUBDIRS); do make -C $$d $@ || exit 1; done
+	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 install::
 	@test -d $(PREFIX)/bin || mkdir -p $(PREFIX)/bin
-	for d in $(SUBDIRS); do make -C $$d PREFIX=$(PREFIX) $@; done
+	for d in $(SUBDIRS); do $(MAKE) -C $$d PREFIX=$(PREFIX) $@; done
 
 clean::
 	find . -name '#*' -or -name '*~' | xargs rm -f
-	for d in $(SUBDIRS); do make -C $$d $@; done
+	for d in $(SUBDIRS); do $(MAKE) -C $$d $@; done
 
 veryclean::	clean
-	for d in $(SUBDIRS); do make -C $$d $@; done
+	for d in $(SUBDIRS); do $(MAKE) -C $$d $@; done
 	rm -rf _build/*
 
 #
