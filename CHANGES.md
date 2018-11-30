@@ -7,7 +7,8 @@
 
 - [ldlsimp] resolve (@0d72177)  
   simp\_uniq and simp\_equiv in ldlsimp.ml now correctly simplify formulas
-  in a recursive-descent manner.
+  in a recursive-descent manner.  
+  (note these remain inefficient and need further improvement.)
 
 # v1.0.2 (2018-10-01)
 

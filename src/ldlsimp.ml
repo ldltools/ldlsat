@@ -884,8 +884,7 @@ and resolve_rec (resolved : (int * int) list) (clauses : formula list) =
     List.mem c clauses in
   let clauses' =
     List.fold_left
-      (fun rslt c ->
-	let c = simp_safe c in if mem c rslt then rslt else rslt @ [c])
+      (fun rslt c -> if mem c rslt then rslt else rslt @ [c])
       clauses added in
 
   if clauses' = clauses
