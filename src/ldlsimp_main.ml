@@ -82,6 +82,7 @@ let output_formula oc f = function
 let apply_tactic f = function
   (* propositional *)
   | "simp" -> Ldlsimp.simp f
+  | "simp_equiv" | "equiv" -> Ldlsimp.simp_equiv f
   | "simp_sort" | "sort" -> Ldlsimp.simp_sort f
   | "simp_uniq" | "uniq" -> Ldlsimp.simp_uniq f
   | "simp_flatten" -> Ldlsimp.simp_flatten f

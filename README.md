@@ -1,10 +1,11 @@
 # Summary
 
 [*ldlsat*](https://github.com/ldltools/ldlsat) is a SAT solver for
-[LDL<sub>f</sub>](https://www.cs.rice.edu/~vardi/).
+[LDL<sub>f</sub>](https://www.cs.rice.edu/~vardi/),
+an extension of [LTL](https://en.wikipedia.org/wiki/Linear_temporal_logic).
 
 For each input LDL<sub>f</sub> formula,
-ldlsat first translates it to
+_ldlsat_ first translates it to
 [MSO](https://en.wikipedia.org/wiki/Monadic_second-order_logic),
 and then passes the generated (equivalent) MSO formula
 to the [mona](http://www.brics.dk/mona/) tool for solving its satisfiability.
@@ -55,7 +56,7 @@ unsatisfiable
 </code>
 </pre>
 
-Note that formulas should conform with [this grammar](docs/README.md).
+Note that formulas should conform to [this grammar](docs/README.md).
 
 # Installation on Docker
 
@@ -84,7 +85,7 @@ Note that formulas should conform with [this grammar](docs/README.md).
   To change the installation directory,
   run `make PREFIX=<prefix> install` instead (default: `PREFIX=/usr/local`).
 
-# Installation on Darwin
+# Installation on macOS (Darwin)
 In addition to the tools listed above, you also need the following:
 
 - GNU common utilities  
@@ -92,10 +93,11 @@ In addition to the tools listed above, you also need the following:
 - GNU sed/awk  
   run: `brew install gnu-sed gawk`
 - GNU make (v4.1 or higher)  
-  run: `brew install remake`
+  run: `brew install remake`  
+  and build with `MAKE=remake remake` instead of `make` 
 
 # Testing
 - run: `make -C tests test`  
-  run regression tests
+  run unit tests
 - run: `make -C tests dfa`  
   generate DFA files from various LDL<sub>f</sub> formulas into `tests/out`

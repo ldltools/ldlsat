@@ -1,0 +1,43 @@
+\documentclass[fancy]{article}
+\setDate{November 2018}
+\begin{document}
+
+\begin{Name}{1}{ldlmc}{author}{LDL Tools}{title}
+ldlmc -- model-checker for LDL
+\end{Name}
+
+\section{Synopsis}
+ldlmc <option>* <model_file>? <infile>
+
+\section{Description}
+ldlmc reads a model M (from <model_file>) in LDL and a LDL formula φ (from <infile>),
+examines if M ⊨ φ (i.e., ⊨ M → φ) holds or not, and then
+returns either "claim holds" (M ⊨ φ holds) or "claim does not hold" 
+
+\section{Options}
+\begin{description}
+%
+\item[\Opt{--model} <model_file>]
+reads a model from <model_file>
+%
+\item[\Opt{--reachability}]
+check reachability (i.e., M ∧ φ ≠ empty), instead of entailment.
+%
+\item[\Opt{-v}, \Opt{--verbose}]
+become verbose
+%
+\item[\Opt{-h}, \Opt{--help}]
+show usage
+\end{description}
+
+\section{See Also}
+ldlsat, ldl2mso
+
+\section{Author}
+\URL{https://ldltools.github.io}\\
+\Email{ldltools@outlook.com}
+
+\section{Copyright}
+(C) Copyright IBM Corp. 2018.
+
+\end{document}

@@ -34,18 +34,26 @@ test -x $LDLSAT || { echo "$LDLSAT not found" > /dev/stderr; exit 1; }
 
 modelfile=
 infile=/dev/stdin
+reachability=0
+verbose=0
 
 silent=0
 while test $# -gt 0
 do
     case $1 in
+	-m | --model)
+	    modelfile=$2
+	    shift ;;
+	-r | --reach*)
+	    reachability=1
+	    ;;
 	-h | --help)
 	    usage
 	    exit 0
 	    ;;
-	-m | --model)
-	    modelfile=$2
-	    shift ;;
+	-v | --verbose)
+	    verbose=1
+	    ;;
 	--silent)
 	    silent=1
 	    ;;
@@ -61,20 +69,27 @@ test .$modelfile = . && { usage; exit 0; }
 test -e $modelfile || { echo "$modelfile does not exit" > /dev/stderr; exit 1; }
 test -e $infile || { echo "$infile does not exit" > /dev/stderr; exit 1; }
 
-# --------------------
+# --------------------------------------------------------------------------------
+# mc (modelfile, infile)
+# --------------------------------------------------------------------------------
+mc ()
+{
+
+local modelfile=$1
+local infile=$2
+test -e $modelfile -a -e $infile || { echo "** error in mc"; exit 1; }
+
 # LDLGEN (model, input)
 # returns: model ⊨ input (as a single LDL formula)
-# --------------------
+# note: "ldl2mso --parse-only" is used for removing comments
 ldlfile=`tempfile -s .ldl`
 cat <<EOF > ${ldlfile} || { echo ";; LDLGEN failed" > /dev/stderr; rm -f $ldlfile; exit 1; }
-(`cat $modelfile | ${LDL2MSO} --parse-only -t ldl`)
+(`${LDL2MSO} $modelfile --parse-only -t ldl`)
 ->
-(`cat $infile | ${LDL2MSO} --parse-only -t ldl`)
+(`${LDL2MSO} $infile --parse-only -t ldl`)
 EOF
 
-# --------------------
 # LDLSAT
-# --------------------
 satoutfile=`tempfile -s .out`
 $LDLSAT $LDLSATOPTS $ldlfile > $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $ldlfile $satoutfile; exit 1; }
 
@@ -87,3 +102,41 @@ if test $silent -eq 1; then test $success -eq 1 && exit 0 || exit 1; fi
 
 test $success -eq 1 && echo "claim holds" || echo "claim does not hold"
 exit 0
+
+}
+
+# --------------------------------------------------------------------------------
+# ra (modelfile, infile)
+# --------------------------------------------------------------------------------
+ra ()
+{
+local modelfile=$1
+local infile=$2
+test -e $modelfile -a -e $infile || { echo "** error in ra"; exit 1; }
+
+# LDLSAT
+satoutfile=`tempfile -s .out`
+cat <<EOF | $LDLSAT $LDLSATOPTS > $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $satoutfile; exit 1; }
+(`${LDL2MSO} $modelfile --parse-only -t ldl`)
+&
+(`${LDL2MSO} $infile --parse-only -t ldl`)
+EOF
+
+success=0
+test "`head -c 11 $satoutfile`" = "satisfiable" && success=1
+rm -f $satoutfile
+
+test $success -eq 1 && echo reachable || echo unreachable
+exit 0
+}
+
+# --------------------------------------------------------------------------------
+# main
+# --------------------------------------------------------------------------------
+
+if test $reachability -eq 1
+then ra $modelfile $infile
+else mc $modelfile $infile
+fi
+
+true

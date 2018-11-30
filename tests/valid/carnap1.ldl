@@ -1,0 +1,3 @@
+// part of Łukasiewicz's first axiom system
+// https://en.wikipedia.org/wiki/List_of_Hilbert_systems
+p -> !p -> q

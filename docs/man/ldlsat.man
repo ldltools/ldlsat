@@ -1,0 +1,52 @@
+'\" t
+.\" Manual page created with latex2man on Fri Nov 30 07:19:29 JST 2018
+.\" NOTE: This file is generated, DO NOT EDIT.
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "LDLSAT" "1" "November 2018" "LDL Tools " "LDL Tools "
+.SH NAME
+
+ldlsat \-\- SAT solver for LDL 
+.PP
+.SH SYNOPSIS
+
+ldlsat <option>* <infile> 
+.PP
+.SH DESCRIPTION
+
+ldlsat reads a single LDL formula from <infile>, 
+converts them to a LDL formula φ, 
+examines if φ is satisfiable or not, and then 
+returns either "valid" (¬φ is unsatisfiable), "satisfiable", or "unsatisfiable" 
+.PP
+.SH OPTIONS
+
+.TP
+\fB\-v\fP, \fB\-\-verbose\fP
+ become verbose 
+.TP
+\fB\-h\fP, \fB\-\-help\fP
+ show usage 
+.PP
+.SH SEE ALSO
+
+ldl2mso, ldlmc 
+.PP
+.SH AUTHOR
+
+\fBhttps://ldltools.github.io\fP
+.br
+\fBldltools@outlook.com\fP
+.PP
+.SH COPYRIGHT
+
+(C) Copyright IBM Corp. 2018. 
+.PP
+.\" NOTE: This file is generated, DO NOT EDIT.

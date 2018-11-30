@@ -342,20 +342,26 @@ and simp_sort_disj_comp f1 f2 =
   | _ -> failwith "simp_sort_disj_comp:5"
  *)
 
-(* simp_uniq *)
+(* simp_uniq -- fold consecutive identical formulas into one *)
 
 let rec simp_uniq f =
   assert (dnf_p f || cnf_p f);
+  simp_uniq_rec f
+
+and simp_uniq_rec f =
   match f with
-  | Ldl_conj (f :: fs) -> Ldl_conj (simp_uniq_rec ([], f) fs)
-  | Ldl_disj (f :: fs) -> Ldl_disj (simp_uniq_rec ([], f) fs)
+  | Ldl_conj fs -> Ldl_conj (simp_uniq_helper (List.map simp_uniq_rec fs))
+  | Ldl_disj fs -> Ldl_disj (simp_uniq_helper (List.map simp_uniq_rec fs))
   | _ -> f
 
-and simp_uniq_rec (rslt, f) fs =
-  match fs with
-  | [] -> rslt @ [f]
-  | f' :: fs' when equal f f' -> simp_uniq_rec (rslt, f) fs'
-  | f' :: fs' -> simp_uniq_rec (rslt @ [f], f') fs'
+and simp_uniq_helper fs =
+  if fs = [] then [] else
+  let gs, g =
+    List.fold_left
+      (fun (rslt, f) f' ->
+	if equal f f' then rslt, f else (rslt @ [f]), f')
+      ([], List.hd fs) (List.tl fs)
+  in gs @ [g]
 
 (* simp_clause *)
 
@@ -590,18 +596,43 @@ let rec simp_equiv f =
   | Ldl_conj [] -> tt
   | Ldl_conj fs ->
       let f' =
-	match simp_equiv_conj (List.map simp_equiv fs) with
+	match simp_equiv_conj [] (List.map simp_equiv fs) with
 	| [] -> tt | [f'] -> f'	| fs' -> Ldl_conj fs'
       in f'
   | Ldl_disj [] -> ff
   | Ldl_disj fs ->
       let f' =
-	match simp_equiv_disj (List.map simp_equiv fs) with
+	match simp_equiv_disj [] (List.map simp_equiv fs) with
 	| [] -> ff | [f'] -> f'	| fs' -> Ldl_disj fs'
       in f'
 
   | _ -> f
 
+and simp_equiv_conj rslt conj =
+  let tt = Ldl_atomic "true" and ff = Ldl_atomic "false" in
+  match conj with
+  | [] -> rslt
+  | f :: rest when f = ff || f = Ldl_neg tt -> [ff]
+  | f :: rest when f = tt || f = Ldl_neg ff -> simp_equiv_conj rslt rest
+  | f :: rest when List.mem (Ldl_neg f) rest (* f ∧ ¬f *) -> [ff]
+  | Ldl_neg f :: rest when List.mem f rest (* ¬f ∧ f *) -> [ff]
+  | f :: rest when List.mem f rslt (* duplicate *) ->
+      simp_equiv_conj rslt rest
+  | f :: rest -> simp_equiv_conj (rslt @ [f]) rest
+
+and simp_equiv_disj rslt disj =
+  let tt = Ldl_atomic "true" and ff = Ldl_atomic "false" in
+  match disj with
+  | [] -> rslt
+  | f :: rest when f = tt || f = Ldl_neg ff -> [tt]
+  | f :: rest when f = ff || f = Ldl_neg tt -> simp_equiv_disj rslt rest
+  | f :: rest when List.mem (Ldl_neg f) rest (* f ∨ ¬f *) -> [tt]
+  | Ldl_neg f :: rest when List.mem f rest (* ¬f ∨ f *) -> [tt]
+  | f :: rest when List.mem f rslt (* duplicate *) ->
+      simp_equiv_disj rslt rest
+  | f :: rest -> simp_equiv_disj (rslt @ [f]) rest
+
+(*
 and simp_equiv_conj (fs : formula list) =
   let tt = Ldl_atomic "true" and ff = Ldl_atomic "false" in
   if List.mem ff fs then [ff] else
@@ -625,11 +656,49 @@ and simp_equiv_disj fs =
       | _ when List.mem (Ldl_neg f) fs -> [tt]
       | _ -> rslt @ [f])
     [] fs
+ *)
+
+let simp_safe f =
+  f |> simp_equiv |> simp_flatten |> cnf |> simp_sort |> simp_uniq |> flatten
+  (*f |> dnf |> simp_flatten |> dnf |> simp_sort |> simp_uniq*)
+  (*f |> flatten |> simp_equiv |> resolve |> dnf |> simp_flatten |> simp_sort*)
 
 (* ================================================================================
    resolve
    ================================================================================
  *)
+
+(* find a single complement pair for resolution.
+   note: detecting more than one pair will not make any difference
+*)
+exception PairFound of (Ldl.formula * Ldl.formula)
+
+let complement_pair (clause1 : formula list) (clause2 : formula list) =
+(*
+  Printf.eprintf ";; complement_pair\n   %s\n   %s\n"
+    (string_of_formula (Ldl_disj clause1))
+    (string_of_formula (Ldl_disj clause2));
+  flush_all ();
+ *)
+  try
+    let _ =
+      List.find
+	(fun elt ->
+	  let found_opt =
+	    List.find_opt
+	      (fun elt' ->
+		match elt, elt' with
+		| Ldl_atomic a, Ldl_neg (Ldl_atomic a') when a = a' -> true
+		| Ldl_neg (Ldl_atomic a), Ldl_atomic a' when a = a' -> true
+		| _ -> false)
+	      clause2
+	  in
+	  match found_opt with
+	  | None -> false
+	  | Some elt' -> raise (PairFound (elt, elt')))
+	clause1
+    in raise Not_found
+  with PairFound pair -> pair
 
 (* resolve1: clause1 clause2 -> clause3
    {p}, {¬p,q} => {q}
@@ -639,12 +708,12 @@ and simp_equiv_disj fs =
    {p}, {q} => Not_found
  *)
 let rec resolve1 (disj1 : formula list) (disj2 : formula list) =
-(*
+  (*
   Printf.eprintf ";; resolve1\n   %s\n   %s\n"
     (string_of_formula (Ldl_disj disj1))
     (string_of_formula (Ldl_disj disj2));
   flush_all ();
- *)
+   *)
   assert (disj1 <> [] && disj2 <> []);
   if not (all_literal_p disj1 && all_literal_p disj2) then
     invalid_arg "resolve1: non-literal detected";
@@ -653,10 +722,11 @@ let rec resolve1 (disj1 : formula list) (disj2 : formula list) =
   let disj1', disj2' = resolve1_helper [] disj1, resolve1_helper [] disj2 in
   if disj1' = [] || disj2' = [] then [] (* indicates ⊥ *) else
 
-  let pairs = complement_pairs disj1' disj2' in
+  let elt1, elt2 = complement_pair disj1' disj2' in
+(*
+  if pairs <> [] then Printf.eprintf "   => %d pair(s) found\n" (List.length pairs);
   if pairs = [] then raise Not_found else
-
-  let elt1, elt2 = List.hd pairs in
+*)
   assert (List.mem elt1 disj1' && List.mem elt2 disj2');
   if disj1' = [elt1] && disj2' = [elt2] then [] (* indicates ⊥ *) else
 
@@ -689,28 +759,6 @@ and all_literal_p (clause : formula list) =
     let _ = List.find (fun f -> not (literal_p f)) clause in false
   with Not_found -> true
 
-and complement_pairs (clause1 : formula list) (clause2 : formula list) =
-(*
-  Printf.eprintf ";; complement_pairs\n   %s\n   %s\n"
-    (string_of_formula (Ldl_disj clause1))
-    (string_of_formula (Ldl_disj clause2));
-  flush_all ();
- *)
-  List.fold_left
-    (fun (pairs : (formula * formula) list) elt ->
-      match
-	List.find_opt
-	  (fun elt' ->
-	    match elt, elt' with
-	    | Ldl_atomic a, Ldl_neg (Ldl_atomic a') when a = a' -> true
-	    | Ldl_neg (Ldl_atomic a), Ldl_atomic a' when a = a' -> true
-	    | _ -> false)
-	  clause2
-      with
-      | None -> pairs
-      | Some elt' -> pairs @ [elt, elt'])
-    [] clause1
-
 (* resolve: f -> g (in cnf)
    ** very inefficient. needs to update!
  *)
@@ -718,10 +766,11 @@ let rec resolve (f : formula) =
 (*
   Printf.eprintf ";; resolve: %s\n" (string_of_formula f); flush_all ();
  *)
-  let f' = if cnf_p f then f else cnf f in
-  assert (cnf_p f');
-  match f' with
-  | Ldl_conj [] -> f'
+  let f = if cnf_p f then f else cnf f in
+  assert (cnf_p f);
+  let f = simp_safe f in
+  match f with
+  | Ldl_conj [] -> f
   | Ldl_conj [g] -> g
   | Ldl_conj clauses ->
       let clauses' : formula list =
@@ -766,9 +815,23 @@ let rec resolve (f : formula) =
 
   | Ldl_disj [] -> Ldl_atomic "false"
   | Ldl_disj disj -> flatten @@ Ldl_disj (resolve1_helper [] disj)
-  | _ -> f'
+  | _ -> f
 
-(* rslt and clauses are of the form [Ldl_disj ..; Ldl_disj ..] *)
+(* resolve_rec resolved clauses -> clauses'
+   where
+   - resolved = {(i, j) | i <= j, clauses[i] and clauses[j] has no complement pair}
+   - clauses = all clauses generated so far
+
+   at each iteration,
+   - resolve_rec traverses over all combinations (c[i], c[j]) in clauses * clauses, and
+     finds (c[i], c[j]) that are not yet resolved (i.e., (i,j) is not in resolved).
+   - if no such pair is found, recursion terminates
+   - o.w. resolve them, and generate a new clause c'.
+     - if c' = {} then recursion terminates
+     - o.w. proceed to another iteration with clauses' = clauses + generated clauses.
+
+   rslt and clauses are of the form [Ldl_disj ..; Ldl_disj ..]
+ *)
 and resolve_rec (resolved : (int * int) list) (clauses : formula list) =
 (*
   Printf.eprintf ";; resolve_rec\n";
@@ -803,8 +866,14 @@ and resolve_rec (resolved : (int * int) list) (clauses : formula list) =
 		    match resolve1 disj1 disj2 with
 		    | [] ->
 			(*Printf.eprintf "** false\n"; flush_all ();*)
-			raise Exit (* resolution fails, indicating ⊥ *)
-		    | disj3 ->  added @ [Ldl_disj disj3], resolved @ [k1, k2]
+			raise Exit (* indicating ⊥ (clause {}) has been generated *)
+		    | disj3 ->
+			let added', resolved' =
+			  match simp_safe (Ldl_disj disj3) with
+			  | Ldl_atomic "false" | Ldl_disj [] -> raise Exit
+			  | Ldl_atomic "true"  | Ldl_conj [] -> added, resolved @ [k1, k2]
+			  | c' -> added @ [c'], resolved @ [k1, k2]
+			in added', resolved'
 		  with Not_found -> added, resolved @ [k1, k2]
 	      in added, resolved, j + 1)
 	    (added, resolved, 0) clauses
@@ -836,17 +905,14 @@ let simp_resolve f =
 (* simplifier for propositional formulas *)
 
 let rec simp f =
-  simp_rec f (simp1 f) |> simp_resolve |> simp1
+  (*simp_rec f (simp1 f) |> simp_resolve |> simp1*)
+  let g = simp_resolve f in simp_rec g (simp_safe g) 10
     
-and simp_rec prev curr =
+and simp_rec prev curr n =
+  if n = 0 then curr else
   if prev = curr
   then curr
-  else simp_rec curr (simp1 curr)
-
-and simp1 f =
-  f |> simp_equiv |> simp_flatten |> cnf |> simp_sort |> simp_uniq |> flatten
-  (*f |> dnf |> simp_flatten |> dnf |> simp_sort |> simp_uniq*)
-  (*f |> flatten |> simp_equiv |> resolve |> dnf |> simp_flatten |> simp_sort*)
+  else simp_rec curr (simp_safe curr) (n - 1)
 
 (* ================================================================================
    simplifiers for ldl formulas

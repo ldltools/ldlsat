@@ -3,6 +3,7 @@ _build/
 tmp/
 obsolete/
 README.html
+CHANGES.html
 *~
 *.cm*
 *.afw

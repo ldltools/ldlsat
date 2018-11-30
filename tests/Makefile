@@ -9,8 +9,25 @@ usage:
 #	@echo -e "\tafw\tgenerate AFW files (in ./out)"
 
 list:
-	@for f in $(TESTCASES_LDL); do echo -ne "`basename $$f .ldl`\t" | cat - $$f; done
+	@for f in $(TESTCASES_LDL); do \
+	echo -ne "`basename $$f .ldl`\t"; grep -v '^/' $$f;\
+	done
 
+test:	test_valid test_unsat test_sat test_dfa
+
+test_valid:
+	$(MAKE) -C valid test
+
+test_unsat:
+	$(MAKE) -C unsat test
+
+test_sat:
+	shelltest all.conf
+
+test_dfa:	dfa
+	python3 check.py
+
+# ----------
 TOP_DIR		= $(shell readlink -f ..)
 include ./Makefile.common
 
@@ -27,15 +44,12 @@ out/%.afw:	%.ldl
 
 .PRECIOUS:	out/%.re out/%.mso out/%.afw
 
-TESTCASES_LDL	= $(shell echo test??.ldl valid/*.ldl unsat/*.ldl)
+TESTCASES_LDL	= $(shell echo test??.ldl)
 TESTCASES_DFA	= $(TESTCASES_LDL:%.ldl=out/%.mso.png)
 TESTCASES_AFW	= $(TESTCASES_LDL:%.ldl=out/%.afw.png)
 
 dfa:	$(TESTCASES_DFA)
 afw:	$(TESTCASES_AFW)
-
-test:	dfa
-	python3 check.py
 
 all::
 install::
