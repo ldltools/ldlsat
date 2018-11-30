@@ -1,4 +1,4 @@
-# v1.1.0rc
+# v1.0.3 (2018-11-30)
 
 - [ldlmc] support reachability checking (`ldlmc --reachability`)
 - add man pages for ldlsat/ldlmc
