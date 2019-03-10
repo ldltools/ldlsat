@@ -6,7 +6,7 @@ list:
 	done
 
 test:
-	shelltest all.conf
+	shelltest valid.conf
 
 clean::
 	rm -f *~

@@ -1,4 +1,3 @@
-(* $Id: $ *)
 (*
  * (C) Copyright IBM Corp. 2018.
  *
@@ -14,10 +13,8 @@
  * limitations under the License.
  *)
 
-open Ldl
+val get : unit -> string
 
-val canonicalize : formula -> formula
-
-val nnf : formula -> formula
-
-val simp : formula -> formula
+val get_major : unit -> int
+val get_minor : unit -> int
+val get_micro : unit -> int

@@ -14,9 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+BINDIR=$(readlink -f `dirname $0`)
+LDL2MSO=$BINDIR/ldl2mso
+test -x $LDL2MSO || { echo "$LDL2MSO not found" > /dev/stderr; exit 1; } 
+VERSION=$($LDL2MSO --version)
+
+LDLSAT=$BINDIR/ldlsat
+LDLSATOPTS=
+test -x $LDLSAT || { echo "$LDLSAT not found" > /dev/stderr; exit 1; } 
+
 usage ()
 {
-    echo "usage: `basename $0` -m <model_file> [<infile>]"
+    echo "ldlmc v$VERSION"
+    echo "usage: `basename $0` <model_file> [<infile>]"
     echo
     echo "`basename $0` is a model-checker for LDL"
     echo "`basename $0` reads a LDL model M (from <model_file>) and a LDL formula φ (from <infile>),"
@@ -25,12 +35,6 @@ usage ()
     echo
     exit 0
 }
-
-LDL2MSO=ldl2mso
-BINDIR=$(readlink -f `dirname $0`)
-LDLSAT=$BINDIR/ldlsat
-LDLSATOPTS=
-test -x $LDLSAT || { echo "$LDLSAT not found" > /dev/stderr; exit 1; } 
 
 modelfile=
 infile=/dev/stdin
@@ -51,6 +55,10 @@ do
 	    usage
 	    exit 0
 	    ;;
+	-V | --version)
+	    echo $VERSION
+	    exit 0
+	    ;;
 	-v | --verbose)
 	    verbose=1
 	    ;;
@@ -60,7 +68,8 @@ do
 	-*)
 	    LDLSATOPTS="$LDLSATOPTS $1"
 	    ;;
-	*) infile=$1
+	*)
+	    test -z "$modelfile" && modelfile=$1 || infile=$1
     esac
     shift
 done

@@ -26,7 +26,14 @@ let opt_fmt_out = ref "unspecified" ;;
 let opt_nopreamble = ref false;;
 
 let synopsis prog =
-  printf "usage: %s [-p] <ldl_file>\n" (Filename.basename prog)
+  printf "%s (version %s)\n" (Filename.basename prog) (Version.get ());
+  printf "usage: %s <option>* <ldl_file>\n" (Filename.basename prog);
+  List.iter (output_string stdout)
+    ["options:\n";
+     "  -p\t\t\tterminate after parsing\n";
+     "  -o <file>\t\toutput to <file>\n";
+     "  -t <fmt>\t\toutput in <fmt> (\"mso\", \"caml\")\n";
+     "  -h\t\t\tdisplay this message\n"]
 
 let rec input_formula ic = function
   | "ldl" | "pretty" ->
@@ -133,6 +140,9 @@ let main argc argv =
 	  opt_verbose := true
       | "-q" | "--silent" ->
 	  opt_verbose := false
+      | "-V" | "--version" ->
+	  printf "%s\n" (Version.get ());
+	  raise Exit
       | "-h" | "--help"  ->
 	  synopsis argv.(0); exit 0
 

@@ -1,4 +1,3 @@
-(* $Id: $ *)
 (*
  * (C) Copyright IBM Corp. 2018.
  *
@@ -14,10 +13,8 @@
  * limitations under the License.
  *)
 
-open Ldl
+let get () = "1.0.4"
 
-val canonicalize : formula -> formula
-
-val nnf : formula -> formula
-
-val simp : formula -> formula
+let get_major () = 1
+let get_minor () = 0
+let get_micro () = 4

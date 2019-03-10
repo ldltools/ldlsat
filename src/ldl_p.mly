@@ -74,7 +74,7 @@ formula	: formula0
 	| formula0 EQUIV formula
 	  { Ldl_conj [Ldl_impl ($1, $3); Ldl_impl ($3, $1);] }
 	| error
-	  { failwith "formula" }
+	  { failwith "[parser] formula" }
 	;
 
 formula0
@@ -147,7 +147,7 @@ path	: path1
 	| path PLUS path1
 	  { Path_sum [$1; $3] }
 	| error
-	  { failwith "path" }
+	  { failwith "[parser] path" }
 	;
 
 path1	: path2
@@ -171,9 +171,9 @@ path2	: path3
 	;
 
 path3	: LBRACE formula RBRACE
-	  { assert (Ldlsimp.propositional $2); Path_prop $2 }
+	  { assert (not @@ modal $2); Path_prop $2 }
 	| neg path3
-	  { failwith "'!path' not supported" }
+	  { failwith "[parser] '!path' not supported" }
 	| LPAREN path RPAREN
 	  { $2 }
 	;	

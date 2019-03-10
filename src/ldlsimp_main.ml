@@ -1,4 +1,18 @@
 (* $Id: ldlsimp_main.ml,v 1.1 2018/01/22 10:23:35 sato Exp $ *)
+(*
+ * (C) Copyright IBM Corp. 2018.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
 
 open Printf
 
@@ -13,17 +27,20 @@ let opt_fmt_out = ref "unspecified"
 let opt_nnf = ref false
 let opt_dnf = ref false
 let opt_tactic = ref ""
+let opt_sat = ref false
 
 let synopsis prog =
+  printf "%s (version %s)\n" (Filename.basename prog) (Version.get ());
   printf "usage: %s <option>* <ldl_file>\n" (Filename.basename prog);
-  let msg =
-    "options:\n"
-    ^ "  --tac <tac>,..\tapply tactics (default: simp)\n"
-    ^ "\t\t\t<tac> ::= simp | res | nnf | cnf | dnf | flat\n"
-    ^ "  -o <file>\t\toutput to <file>\n"
-    ^ "  -p\t\t\tparse-only\n"
-    ^ "  -h\t\t\tdisplay this message\n"
-  in output_string stdout msg
+  List.iter (output_string stdout)
+    ["options:\n";
+     "  --tac <tac>,..\tapply tactics (default: simp)\n";
+     "\t\t\t<tac> ::= simp | nnf | neg | ...\n";
+     "  --sat\t\t\trun as a propositional SAT solver (resolution-based)\n";
+     "  -p\t\t\tterminate after parsing\n";
+     "  -o <file>\t\toutput to <file>\n";
+     "  -t <fmt>\t\toutput in <fmt> (\"ldl\", \"caml\", \"json\", \"dimacs\")\n";
+     "  -h\t\t\tdisplay this message\n"]
 
 let rec input_formula ic = function
   | "ldl" ->
@@ -32,6 +49,9 @@ let rec input_formula ic = function
       let json =  Yojson.Safe.from_channel ic in
       (match Ldl.formula_of_yojson json with
 	Ok f -> f | Error msg -> failwith msg)
+  | "dimacs" ->
+      Ldl_conj (Toysat.dimacs_parse ic)
+
   | "unspecified" ->
       let lst = ref [] in
       let _ =
@@ -55,6 +75,7 @@ and formula_from_string str = function
       let json =  Yojson.Safe.from_string str in
       (match Ldl.formula_of_yojson json with
 	Ok f -> f | Error msg -> failwith msg)
+
   | "unspecified" when Bytes.length str < 6 ->
       formula_from_string str "ldl"
   | "unspecified" ->
@@ -76,24 +97,39 @@ let output_formula oc f = function
       let json = Ldl.formula_to_yojson f in
       Yojson.Safe.to_channel oc json;
       output_string oc "\n"
+  | "dimacs" ->
+      if !opt_verbose then output_string oc @@ "c " ^ Ldl.string_of_formula f ^ "\n";
+      Toysat.dimacs_print ~verbose: !opt_verbose oc (Toysat.tseitin f)
   | fmt ->
       failwith ("unknown format: " ^ fmt)
 
-let apply_tactic f = function
-  (* propositional *)
-  | "simp" -> Ldlsimp.simp f
-  | "simp_equiv" | "equiv" -> Ldlsimp.simp_equiv f
-  | "simp_sort" | "sort" -> Ldlsimp.simp_sort f
-  | "simp_uniq" | "uniq" -> Ldlsimp.simp_uniq f
-  | "simp_flatten" -> Ldlsimp.simp_flatten f
+let output_solution oc (solved, model) = function
+  | _ ->
+      if not solved then
+	output_string oc "unsatisfiable\n"
+      else
+	let _ =
+	  output_string oc "satisfiable\n";
+	  List.iter
+	    (fun (p, b) ->
+	      let str =
+		Ldl.string_of_formula @@ if b then Ldl_atomic p else Ldl_neg (Ldl_atomic p)
+	      in output_string oc @@ str ^ " ")
+	    model;
+	  output_string oc "\n"
+	in ()
 
-  | "resolve" | "res" -> Ldlsimp.resolve f
-  | "dnf" -> Ldlsimp.dnf f
-  | "cnf" -> Ldlsimp.cnf f
-  | "flatten" | "flat" -> Ldlsimp.flatten f
-
-  (* ldl *)
+(* *)
+let rec apply_tactic f = function
+  | "id" | "nop" -> f
+  | "neg" -> Ldl.Ldl_neg f
   | "nnf" -> Ldlsimp.nnf f
+  | "simp" -> Ldlsimp.simp f
+
+  (* propositional-only *)
+  | "tseitin" ->
+      Ldl_conj (Toysat.tseitin f)
+
   | tac -> invalid_arg tac
 
 (* *)
@@ -106,15 +142,19 @@ let main argc argv =
       match argv.(!i) with
       | "-" ->
 	  infile := "/dev/stdin";
-      | "-p" | "--parse-only" ->
-	  opt_parse_only := true
       | "--ldl" ->
 	  opt_fmt_in := "ldl"
       | "--json" ->
 	  opt_fmt_in := "json"
+      | "--dimacs" ->
+	  opt_fmt_in := "dimacs"
 
       | "--tac" | "--tactic" ->
 	  opt_tactic := argv.(!i+1); incr i;
+      | "--sat" ->
+	  opt_sat := true
+      | "-p" | "--parse-only" ->
+	  opt_parse_only := true
 
       | "-o" | "--output" ->
 	  outfile := argv.(!i+1); incr i;
@@ -125,6 +165,9 @@ let main argc argv =
 	  opt_verbose := true
       | "-q" | "--silent" ->
 	  opt_verbose := false
+      | "-V" | "--version" ->
+	  printf "%s\n" (Version.get ());
+	  raise Exit
       | "-h" | "--help"  ->
 	  synopsis argv.(0); exit 0
       | _  when argv.(!i).[0] = '-' ->
@@ -143,11 +186,21 @@ let main argc argv =
   let oc = open_out !outfile in
 
   (* parse a proposition in ldl *)
-  let ic = open_in !infile in
-  let f = input_formula ic !opt_fmt_in in
+  let ic = open_in !infile
+  in let f : Ldl.formula = input_formula ic !opt_fmt_in
+  in
+  close_in ic;
   if !opt_parse_only then
     begin
       output_formula oc f !opt_fmt_out;
+      raise Exit
+    end;
+
+  (* sat *)
+  if !opt_sat then
+    begin
+      let s = Toysat.solve @@ Toysat.tseitin f in
+      output_solution oc s !opt_fmt_out;
       raise Exit
     end;
 
@@ -157,9 +210,9 @@ let main argc argv =
     try
       let j = String.index_from str i ','
       in split str (j + 1) n (rslt @ [String.sub str i (j - i)])
-    with Not_found -> rslt @ [String.sub str i (n - i)] in
-  let tactics = split !opt_tactic 0 (String.length !opt_tactic) [] in
-  let f' =
+    with Not_found -> rslt @ [String.sub str i (n - i)]
+  in let tactics = split !opt_tactic 0 (String.length !opt_tactic) []
+  in let f' =
     List.fold_left
       (fun rslt t ->
 	if !opt_verbose then
@@ -168,6 +221,7 @@ let main argc argv =
       f (if tactics = [] then ["simp"] else tactics)
   in
   output_formula oc f' !opt_fmt_out;
+  close_out oc;
 
   (* clean-up *)
   ()
@@ -181,13 +235,17 @@ with
 | Exit -> exit 0
 | Failure s ->
     flush_all ();
-    eprintf ";; Failure: %s\n" s;
+    eprintf "** Failure: %s\n" s;
+    exit 1;
+| Invalid_argument s ->
+    flush_all ();
+    eprintf "** Invalid_argument: %s\n" s;
     exit 1;
 | Not_found ->
     flush_all ();
-    eprintf ";; Something seems missing!\n";
+    eprintf "** Something seems missing!\n";
     exit 1;
 | End_of_file ->
     flush_all ();
-    eprintf ";; Unexpected end of file\n";
+    eprintf "** Unexpected end of file\n";
     exit 1;

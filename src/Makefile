@@ -91,33 +91,35 @@ all::	$(LIBS) $(BINS)
 
 $(BUILD_DIR)/ldlsat.cma:	$(CMOS)
 	$(CAMLC) $(CAMLCFLAGS) -o $@ -a \
-	$(BUILD_DIR)/{ldl,ldlsimp,ldl_l,ldl_p,re}.cmo \
+	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,toysat,ldlsimp,re}.cmo \
 	$(BUILD_DIR)/mso/{mso,re2mso}.cmo \
 	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmo
 $(BUILD_DIR)/ldlsat.cmxa:	$(CMXS)
 	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ -a \
-	$(BUILD_DIR)/{ldl,ldlsimp,ldl_l,ldl_p,re}.cmx \
+	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,toysat,ldlsimp,re}.cmx \
 	$(BUILD_DIR)/mso/{mso,re2mso}.cmx \
 	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmx
 
 # $(BINS.byte)
+$(BUILD_DIR)/ldl2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/version.cmo $(BUILD_DIR)/mso/ldl2mso_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+$(BUILD_DIR)/ldlsimp.byte:	$(LIBS.byte) $(BUILD_DIR)/version.cmo $(BUILD_DIR)/ldlsimp_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+
+# legacy
 $(BUILD_DIR)/ldl2re.byte:	$(LIBS.byte) $(BUILD_DIR)/ldl2re_main.cmo
 	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 $(BUILD_DIR)/re2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/mso/re2mso_main.cmo
 	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/ldl2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/mso/ldl2mso_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 $(BUILD_DIR)/ldl2afw.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/ldl2afw_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/ldlsimp.byte:	$(LIBS.byte) $(BUILD_DIR)/ldlsimp_main.cmo
 	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 $(BUILD_DIR)/afwprint.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/afwprint_main.cmo
 	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 
 # $(BINS.opt)
-$(BUILD_DIR)/ldl2mso.opt:	$(LIBS.opt) $(BUILD_DIR)/mso/ldl2mso_main.cmx
+$(BUILD_DIR)/ldl2mso.opt:	$(LIBS.opt) $(BUILD_DIR)/version.cmx $(BUILD_DIR)/mso/ldl2mso_main.cmx
 	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
-$(BUILD_DIR)/ldlsimp.opt:	$(LIBS.opt) $(BUILD_DIR)/ldlsimp_main.cmx
+$(BUILD_DIR)/ldlsimp.opt:	$(LIBS.opt) $(BUILD_DIR)/version.cmx $(BUILD_DIR)/ldlsimp_main.cmx
 	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
 
 #
@@ -151,11 +153,11 @@ Makefile.depend::	$(SRCS_mli) $(SRCS_ml) $(SRCS_mll) $(SRCS_mly)
 	 line=`tail -1 Makefile.depend | grep '^# generated at'`;\
 	 test ."$$line" = . && exit 0;\
 	 break;\
-	done;\
-#	echo "$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi" >> $@;\
+	done
+	echo "$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi" >> $@
 	echo "$(BUILD_DIR)/ldl_l.cmi: $(BUILD_DIR)/ldl_p.cmi" >> $@
-	echo "$(BUILD_DIR)/ldl_p.cmo: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi $(BUILD_DIR)/ldl.cmi" >> $@;\
-	echo "$(BUILD_DIR)/ldl_p.cmx: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi $(BUILD_DIR)/ldl.cmi" >> $@;\
+	echo "$(BUILD_DIR)/ldl_p.cmo: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi $(BUILD_DIR)/ldl_l.cmi" >> $@;\
+	echo "$(BUILD_DIR)/ldl_p.cmx: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi $(BUILD_DIR)/ldl_l.cmi" >> $@;\
 
 $(BUILD_DIR)/ppx:
 	$(CAMLOPT) $(CAML_INC_FLAGS) \

@@ -1,6 +1,5 @@
-(* $Id: $ *)
 (*
- * (C) Copyright IBM Corp. 2018.
+ * (C) Copyright IBM Corp. 2019.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +13,16 @@
  * limitations under the License.
  *)
 
-open Ldl
+(* solver *)
 
-val canonicalize : formula -> formula
+val solve : Ldl.formula list -> bool * (string * bool) list
 
-val nnf : formula -> formula
+(* helpers *)
 
-val simp : formula -> formula
+val tseitin : ?prefix: string -> Ldl.formula -> Ldl.formula list
+
+(* input/output *)
+
+val dimacs_parse : ?names: string array -> in_channel -> Ldl.formula list
+
+val dimacs_print : ?verbose: bool -> out_channel -> Ldl.formula list -> unit
