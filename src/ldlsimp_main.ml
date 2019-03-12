@@ -35,12 +35,14 @@ let synopsis prog =
   List.iter (output_string stdout)
     ["options:\n";
      "  --tac <tac>,..\tapply tactics (default: simp)\n";
-     "\t\t\t<tac> ::= simp | nnf | neg | ...\n";
+     "\t\t\t<tac> ::= simp | nnf | neg | tseitin\n";
      "  --sat\t\t\trun as a propositional SAT solver (resolution-based)\n";
      "  -p\t\t\tterminate after parsing\n";
      "  -o <file>\t\toutput to <file>\n";
      "  -t <fmt>\t\toutput in <fmt> (\"ldl\", \"caml\", \"json\", \"dimacs\")\n";
      "  -h\t\t\tdisplay this message\n"]
+
+(* input *)
 
 let rec input_formula ic = function
   | "ldl" ->
@@ -50,7 +52,7 @@ let rec input_formula ic = function
       (match Ldl.formula_of_yojson json with
 	Ok f -> f | Error msg -> failwith msg)
   | "dimacs" ->
-      Ldl_conj (Toysat.dimacs_parse ic)
+      Ldl.Ldl_conj (Toysat.dimacs_parse ic)
 
   | "unspecified" ->
       let lst = ref [] in
@@ -75,16 +77,40 @@ and formula_from_string str = function
       let json =  Yojson.Safe.from_string str in
       (match Ldl.formula_of_yojson json with
 	Ok f -> f | Error msg -> failwith msg)
+  | "dimacs" ->
+      dimacs_parse str
 
   | "unspecified" when Bytes.length str < 6 ->
       formula_from_string str "ldl"
   | "unspecified" ->
       if Bytes.sub str 0 6 = "[\"Ldl_" then
 	formula_from_string str "json"
+      else if looks_like_dimacs str (Bytes.length str) 0 then
+	dimacs_parse str
       else
 	formula_from_string str "ldl"
   | fmt ->
       failwith ("unknown format: " ^ fmt)
+
+and looks_like_dimacs str len pos =
+  (* check if "p cnf" is included *)
+  assert (pos < len);
+  if pos + 5 > len then false else if String.sub str pos 5 = "p cnf" then true
+  else
+    try
+      looks_like_dimacs str len @@ 1 + String.index_from str pos '\n'
+    with Not_found -> false    
+
+and dimacs_parse str =
+  let tempname, oc = Filename.open_temp_file "dimacs" ".cnf"
+  in output_string oc str; close_out oc;
+
+  let ic = open_in tempname
+  in let f = Ldl.Ldl_conj (Toysat.dimacs_parse ic)
+  in close_in ic; Sys.remove tempname;
+  f
+
+(* output *)
 
 let output_formula oc f = function
   | "ldl"  | "unspecified" ->
@@ -119,20 +145,21 @@ let output_solution oc (solved, model) = function
 	  output_string oc "\n"
 	in ()
 
-(* *)
+(* formula transformation *)
 let rec apply_tactic f = function
+  | "simp" -> Ldlsimp.simp f
+
   | "id" | "nop" -> f
   | "neg" -> Ldl.Ldl_neg f
   | "nnf" -> Ldlsimp.nnf f
-  | "simp" -> Ldlsimp.simp f
 
   (* propositional-only *)
   | "tseitin" ->
       Ldl_conj (Toysat.tseitin f)
 
-  | tac -> invalid_arg tac
+  | tac -> invalid_arg @@ "[apply_tactic] " ^ tac
 
-(* *)
+(* main *)
 let main argc argv =
   let i = ref 1
   and infile = ref "/dev/stdin"
@@ -184,6 +211,7 @@ let main argc argv =
 
   (* output *)
   let oc = open_out !outfile in
+  at_exit (fun _ -> close_out oc);
 
   (* parse a proposition in ldl *)
   let ic = open_in !infile
@@ -221,7 +249,6 @@ let main argc argv =
       f (if tactics = [] then ["simp"] else tactics)
   in
   output_formula oc f' !opt_fmt_out;
-  close_out oc;
 
   (* clean-up *)
   ()

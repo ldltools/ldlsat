@@ -89,6 +89,19 @@ LIBS		= $(LIBS.byte) $(LIBS.opt) $(LIBS.opt:%.cmxa=%.a)
 
 all::	$(LIBS) $(BINS)
 
+# $(BINS.byte)
+$(BUILD_DIR)/ldl2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/version.cmo $(BUILD_DIR)/mso/ldl2mso_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+$(BUILD_DIR)/ldlsimp.byte:	$(LIBS.byte) $(BUILD_DIR)/version.cmo $(BUILD_DIR)/ldlsimp_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+
+# $(BINS.opt)
+$(BUILD_DIR)/ldl2mso.opt:	$(LIBS.opt) $(BUILD_DIR)/version.cmx $(BUILD_DIR)/mso/ldl2mso_main.cmx
+	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
+$(BUILD_DIR)/ldlsimp.opt:	$(LIBS.opt) $(BUILD_DIR)/version.cmx $(BUILD_DIR)/ldlsimp_main.cmx
+	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
+
+# ldlsat library
 $(BUILD_DIR)/ldlsat.cma:	$(CMOS)
 	$(CAMLC) $(CAMLCFLAGS) -o $@ -a \
 	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,toysat,ldlsimp,re}.cmo \
@@ -100,11 +113,47 @@ $(BUILD_DIR)/ldlsat.cmxa:	$(CMXS)
 	$(BUILD_DIR)/mso/{mso,re2mso}.cmx \
 	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmx
 
-# $(BINS.byte)
-$(BUILD_DIR)/ldl2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/version.cmo $(BUILD_DIR)/mso/ldl2mso_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/ldlsimp.byte:	$(LIBS.byte) $(BUILD_DIR)/version.cmo $(BUILD_DIR)/ldlsimp_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+# ldlsat library -- moduled version
+all::	$(BUILD_DIR)/_export/ldlsat.cma $(BUILD_DIR)/_export/ldlsat.cmxa
+
+SRC_MODULES	= ldl re mso/mso mso/re2mso toysat ldlsimp
+$(BUILD_DIR)/_export/ldlsat.mli:	$(SRC_MODULES:%=%.mli)
+	mkdir -p $$(dirname $@)
+	rm -f $@; touch $@
+	for f in $^; do \
+	  m=$$(basename $$f .mli); \
+	  echo "module $${m^} : sig" >> $@; \
+	  cat $$f >> $@; \
+	  echo "end" >> $@; \
+	done
+	echo "module Ldl_p : sig type token val formula : (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Ldl.formula end" >> $@
+	echo "module Ldl_l : sig val token : Lexing.lexbuf -> Ldl_p.token end" >> $@
+$(BUILD_DIR)/_export/ldlsat.ml:	$(SRC_MODULES:%=%.ml)
+	mkdir -p $$(dirname $@)
+	rm -f $@; touch $@
+	for f in $^ $(BUILD_DIR)/ldl_{p,l}.ml; do \
+	  m=$$(basename $$f .ml); \
+	  echo "module $${m^} = $${m^}" >> $@; \
+	done
+$(BUILD_DIR)/_export/ldlsat.cmi:	$(BUILD_DIR)/_export/ldlsat.mli $(CMIS)
+	$(CAMLC) $(CAMLCFLAGS) -c $< -o $@
+$(BUILD_DIR)/_export/ldlsat.cmo:	$(BUILD_DIR)/_export/ldlsat.ml $(BUILD_DIR)/_export/ldlsat.cmi
+	$(CAMLC) $(CAMLCFLAGS) -I $$(dirname $@) -c $< -o $@
+$(BUILD_DIR)/_export/ldlsat.cmx:	$(BUILD_DIR)/_export/ldlsat.ml $(BUILD_DIR)/_export/ldlsat.cmi
+	$(CAMLOPT) $(CAMLOPTFLAGS) -I $$(dirname $@) -c $< -o $@
+
+$(BUILD_DIR)/_export/ldlsat.cma:	$(BUILD_DIR)/_export/ldlsat.cmo $(CMOS)
+	$(CAMLC) $(CAMLCFLAGS) -o $@ -a \
+	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,toysat,ldlsimp,re}.cmo \
+	$(BUILD_DIR)/mso/{mso,re2mso}.cmo \
+	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmo \
+	$(BUILD_DIR)/_export/ldlsat.cmo
+$(BUILD_DIR)/_export/ldlsat.cmxa:	$(BUILD_DIR)/_export/ldlsat.cmx $(CMXS)
+	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ -a \
+	$(BUILD_DIR)/{ldl,ldl_l,ldl_p,toysat,ldlsimp,re}.cmx \
+	$(BUILD_DIR)/mso/{mso,re2mso}.cmx \
+	$(BUILD_DIR)/afw/{afw,ldl2afw}.cmx \
+	$(BUILD_DIR)/_export/ldlsat.cmx
 
 # legacy
 $(BUILD_DIR)/ldl2re.byte:	$(LIBS.byte) $(BUILD_DIR)/ldl2re_main.cmo
@@ -116,12 +165,6 @@ $(BUILD_DIR)/ldl2afw.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/ldl2afw_main.cmo
 $(BUILD_DIR)/afwprint.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/afwprint_main.cmo
 	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 
-# $(BINS.opt)
-$(BUILD_DIR)/ldl2mso.opt:	$(LIBS.opt) $(BUILD_DIR)/version.cmx $(BUILD_DIR)/mso/ldl2mso_main.cmx
-	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
-$(BUILD_DIR)/ldlsimp.opt:	$(LIBS.opt) $(BUILD_DIR)/version.cmx $(BUILD_DIR)/ldlsimp_main.cmx
-	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
-
 #
 install::	all install_bins install_libs
 
@@ -132,9 +175,10 @@ install_bins::	all
 	rsync -avzop $(BUILD_DIR)/ldlsimp.opt $(PREFIX)/bin/ldlsimp
 install_libs::	all
 	mkdir -p $(PREFIX)/lib/ldlsat
-	rsync -avzop $(LIBS) $(PREFIX)/lib/ldlsat
-	rsync -avzop $(CMIS) $(PREFIX)/lib/ldlsat
-	rsync -avzop $(SRCS_mli) $(PREFIX)/lib/ldlsat
+#	rsync -avzop $(LIBS) $(PREFIX)/lib/ldlsat
+#	rsync -avzop $(CMIS) $(PREFIX)/lib/ldlsat
+#	rsync -avzop $(SRCS_mli) $(PREFIX)/lib/ldlsat
+	rsync -avzop $(BUILD_DIR)/_export/ldlsat.{cmi,cma,cmxa,a} $(PREFIX)/lib/ldlsat
 
 clean::
 veryclean::
