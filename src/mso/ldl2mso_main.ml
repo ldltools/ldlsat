@@ -14,12 +14,14 @@
  * limitations under the License.
  *)
 
+open Ldlsat
 open Printf
 
 let stdin = open_in "/dev/stdin"
 let opt_o = ref "unspecified" ;;
 let opt_o_channel = ref stdout ;;
 let opt_parse_only = ref false ;;
+let opt_until = ref "mso" ;;
 let opt_verbose = ref false ;;
 let opt_fmt_in = ref "unspecified" ;;
 let opt_fmt_out = ref "unspecified" ;;
@@ -88,12 +90,13 @@ let output_formula oc f = function
       failwith "unknown output format"
 
 let output_re oc e = function
-  | "re" ->
-      Re.print_re (fun s -> output_string oc s; flush_all ()) e
+  | "re" | "unspecified" ->
+      Re.print_re (fun s -> output_string oc s; flush_all ()) e;
+      output_string oc "\n"
   | "caml" ->
       output_string oc (Re.show_re e);
       output_string oc "\n";
-  | "json" | "unspecified" ->
+  | "json" ->
       let json = Re.re_to_yojson e in
       Yojson.Safe.to_channel oc json;
       output_string oc "\n"
@@ -122,9 +125,10 @@ let main argc argv =
       match argv.(!i) with
       | "-" ->
 	  infile := "/dev/stdin";
-      | "-o" | "--output" ->
+
+      | "-o" | "--output" when !i + 1 < argc ->
 	  outfile := argv.(!i+1); incr i;
-      | "-t" ->
+      | "-t" when !i + 1 < argc ->
 	  opt_fmt_out := argv.(!i+1); incr i;
       | "--ldl" ->
 	  opt_fmt_in := "pretty"
@@ -134,7 +138,11 @@ let main argc argv =
       | "-p" | "--parse-only" ->
 	  opt_parse_only := true
       | "--nopreamble" ->
+	  
 	  opt_nopreamble := true
+      | "-u" | "--until" when !i + 1 < argc ->
+	  if not (List.mem argv.(!i + 1) ["ldl"; "re"; "mso"]) then invalid_arg argv.(!i + 1);
+	  opt_until := argv.(!i + 1); incr i;
 
       | "-v" | "--verbose" ->
 	  opt_verbose := true
@@ -146,6 +154,8 @@ let main argc argv =
       | "-h" | "--help"  ->
 	  synopsis argv.(0); exit 0
 
+      | _ when argv.(!i).[0] = '-' ->
+	  invalid_arg @@ "invalid option: " ^ argv.(!i)
       | _    ->
 	  infile := argv.(!i)
     in incr i
@@ -161,7 +171,7 @@ let main argc argv =
   (* parse a ldl formula *)
   let ic = open_in !infile in
   let f = input_formula ic !opt_fmt_in in
-  if !opt_parse_only then
+  if !opt_parse_only || !opt_until = "ldl" then
     begin
       output_formula oc f !opt_fmt_out;
       raise Exit
@@ -169,6 +179,13 @@ let main argc argv =
 
   (* ldl -> re *)
   let e : Re.re = Re.re_of_formula f in
+  if !opt_until = "re" then
+    begin
+      output_re oc e !opt_fmt_out;
+      raise Exit
+    end;
+
+
   (* re -> mso *)
   let p : Mso.prog = Re2mso.re2mso e in
 

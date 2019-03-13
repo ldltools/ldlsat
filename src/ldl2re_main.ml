@@ -1,5 +1,6 @@
 (* $Id: ldl2re_main.ml,v 1.2 2017/10/21 07:41:26 sato Exp $ *)
 
+open Ldlsat
 open Printf
 
 let stdin = open_in "/dev/stdin"

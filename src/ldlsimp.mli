@@ -14,10 +14,8 @@
  * limitations under the License.
  *)
 
-open Ldl
+val canonicalize : Ldl.formula -> Ldl.formula
 
-val canonicalize : formula -> formula
+val nnf : Ldl.formula -> Ldl.formula
 
-val nnf : formula -> formula
-
-val simp : formula -> formula
+val simp : Ldl.formula -> Ldl.formula

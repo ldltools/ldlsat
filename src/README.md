@@ -3,20 +3,21 @@
 - ldl2mso  
   usage: ldl2mso _infile_
 
-- ldl2re  
+- ldlsimp  
+  usage: ldlsimp [--tac _tac_,_tac_,..] _infile_
+
+- (deprecated) ldl2re  
   usage: ldl2re [-p] [-t _fmt_] _infile_
   - _infile_ can be formatted in _ldl_ or _json_ (auto-recognized)
   - -t _fmt_: specifies the output format.
     _fmt_ can be either of _json_ (default) and _caml_, and _re_
 
-- ldl2afw  
+- (deprecated) ldl2afw  
   usage: ldl2afw [-p] [-t _fmt_] _infile_   
   - _infile_ can be formatted in _ldl_ or _json_ (auto-recognized)
   - -t _fmt_: specifies the output format.
     _fmt_ can be either of _json_ (default) and _caml_
 
-- ldlsimp  
-  usage: ldlsimp [--tac _tac_,_tac_,..] _infile_
 
 ## source/intermediate languages
 

@@ -1,6 +1,7 @@
-# v1.0.4 (2019-03-31)
+# v1.0.4 (2019-03-xx)
 
-- (new) [toysat] add a new simple SAT solver, called toysat
+- [ldlsat] pack all modules into "Ldlsat"
+- [toysat] add a new simple SAT solver, called toysat
   - DPLL w/o any smart heuristics
   - support DIMACS CNF for reading/writing propositional formulas
 

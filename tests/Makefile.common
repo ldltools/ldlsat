@@ -24,8 +24,9 @@ all::
 
 check::
 	@test -x $(LDL2MSO) || exit 1
-	@test -x $(LDL2AFW) || exit 1
 	@test -x $(LDLSIMP) || exit 1
+#	@test -x $(LDL2AFW) || exit 1
+
 all::	check
 
 # ================================================================================
@@ -39,10 +40,10 @@ all::	check
 %.re:	%.ldl
 	@test -x $(LDL2RE)  || exit 1
 	$(LDL2RE) $< -o $@  || { rm -f $@; exit 1; }
-%.afw:	%.ldl
-	@test -x $(LDL2AFW) || exit 1
-	$(LDL2AFW) $< -o $@ || { rm -f $@; exit 1; }
-
+#%.afw:	%.ldl
+#	@test -x $(LDL2AFW) || exit 1
+#	$(LDL2AFW) $< -o $@ || { rm -f $@; exit 1; }
+#
 # RE
 #%.mso:	%.re
 #	@test -x $(RE2MSO) || exit 1
