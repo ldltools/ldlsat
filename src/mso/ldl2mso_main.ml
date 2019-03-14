@@ -37,6 +37,8 @@ let synopsis prog =
      "  -t <fmt>\t\toutput in <fmt> (\"mso\", \"caml\")\n";
      "  -h\t\t\tdisplay this message\n"]
 
+(* input *)
+
 let rec input_formula ic = function
   | "ldl" | "pretty" ->
       Ldl_p.formula Ldl_l.token (Lexing.from_channel ic)
@@ -44,6 +46,8 @@ let rec input_formula ic = function
       let json =  Yojson.Safe.from_channel ic in
       (match Ldl.formula_of_yojson json with
 	Ok f -> f | Error msg -> failwith msg)
+  | "dimacs" ->
+      Ldl.Ldl_conj (Toysat.dimacs_parse ic)
   | "unspecified" ->
       let lst = ref [] in
       let _ =
@@ -67,13 +71,37 @@ and formula_from_string str = function
       let json =  Yojson.Safe.from_string str in
       (match Ldl.formula_of_yojson json with
 	Ok f -> f | Error msg -> failwith msg)
+  | "dimacs" ->
+      dimacs_parse str
   | "unspecified" when Bytes.length str < 6 ->
       formula_from_string str "pretty"
   | "unspecified" ->
       if Bytes.sub str 0 6 = "[\"Ldl_" then
 	formula_from_string str "json"
+      else if looks_like_dimacs str (Bytes.length str) 0 then
+	dimacs_parse str
       else
 	formula_from_string str "pretty"
+
+and looks_like_dimacs str len pos =
+  (* check if "p cnf" is included *)
+  assert (pos < len);
+  if pos + 5 > len then false else if String.sub str pos 5 = "p cnf" then true
+  else
+    try
+      looks_like_dimacs str len @@ 1 + String.index_from str pos '\n'
+    with Not_found -> false    
+
+and dimacs_parse str =
+  let tempname, oc = Filename.open_temp_file "dimacs" ".cnf"
+  in output_string oc str; close_out oc;
+
+  let ic = open_in tempname
+  in let f = Ldl.Ldl_conj (Toysat.dimacs_parse ic)
+  in close_in ic; Sys.remove tempname;
+  f
+
+(* output *)
 
 let output_formula oc f = function
   | "ldl" | "unspecified" ->
@@ -125,15 +153,17 @@ let main argc argv =
       match argv.(!i) with
       | "-" ->
 	  infile := "/dev/stdin";
+      | "--ldl" ->
+	  opt_fmt_in := "pretty"
+      | "--json" ->
+	  opt_fmt_in := "json"
+      | "--dimacs" ->
+	  opt_fmt_in := "dimacs"
 
       | "-o" | "--output" when !i + 1 < argc ->
 	  outfile := argv.(!i+1); incr i;
       | "-t" when !i + 1 < argc ->
 	  opt_fmt_out := argv.(!i+1); incr i;
-      | "--ldl" ->
-	  opt_fmt_in := "pretty"
-      | "--json" ->
-	  opt_fmt_in := "json"
 
       | "-p" | "--parse-only" ->
 	  opt_parse_only := true

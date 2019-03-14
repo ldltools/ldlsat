@@ -1,12 +1,11 @@
-# v1.0.4 (2019-03-xx)
+# v1.0.4 (2019-03-15)
 
-- [ldlsat] pack all modules into "Ldlsat"
+- [ldlsat] pack all ocaml modules into "Ldlsat" for modularity
+- [ldlsat] support DIMACS CNF
 - [toysat] add a new simple SAT solver, called toysat
   - DPLL w/o any smart heuristics
   - support DIMACS CNF for reading/writing propositional formulas
-
-## fix
-- [ldl_p] the "preserve" rule now recognizes parameter formulas correctly.
+  - note: "ldlsimp --sat" now uses toysat, while ldlsat remains fully relying on mona
 
 # v1.0.3 (2018-11-30)
 
