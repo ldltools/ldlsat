@@ -1,4 +1,5 @@
-FROM debian:stable-slim as builder
+FROM debian:stretch-slim as builder
+#FROM ubuntu:18.04 as builder
 MAINTAINER LDL Tools development team <ldltools@outlook.com>
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -7,13 +8,12 @@ ENV DEBCONF_NOWARNINGS yes
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     dpkg-reconfigure -f noninteractive dash;\
-    echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local-lib.conf
-RUN apt-get update;\
-    apt-get install -y build-essential flex bison gawk file rsync
+    echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local-lib.conf;\
+    apt-get update;\
+    apt-get install -y build-essential flex bison gawk file rsync wget
 
 # mona
-WORKDIR /root
-RUN apt-get install -y wget;\
+RUN cd /root;\
     wget -q http://www.brics.dk/mona/download/mona-1.4-17.tar.gz;\
     tar xzf mona-1.4-17.tar.gz;\
     (cd mona-1.4; ./configure --prefix=/usr/local && make && make install-strip);\
@@ -27,8 +27,8 @@ RUN apt-get install -y opam;\
 
 # ldlsat
 ADD . /root/ldlsat
-WORKDIR /root/ldlsat
-RUN eval `opam config env`;\
+RUN cd /root/ldlsat;\
+    eval `opam config env`;\
     opam install -y ocamlfind ppx_deriving ppx_deriving_yojson;\
     make veryclean && make && make PREFIX=/usr/local install
 
@@ -38,17 +38,16 @@ CMD ["/bin/bash"]
 # ====================
 # final image
 # ====================
-#FROM alpine:latest
-FROM debian:stable-slim
+FROM debian:stretch-slim
+#FROM ubuntu:18.04
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     dpkg-reconfigure -f noninteractive dash;\
-    echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local-lib.conf
-RUN apt-get update;\
+    echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local-lib.conf;\
+    apt-get update;\
     apt-get install -y gawk
 
-WORKDIR /usr/local
-COPY --from=builder /usr/local .
+COPY --from=builder /usr/local /usr/local
 RUN ldconfig
 
 WORKDIR /root

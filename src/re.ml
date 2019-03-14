@@ -15,7 +15,6 @@
  *)
 
 open Ldl
-open Ldlsimp
 
 type re =
   | Re_prop of prop
@@ -42,18 +41,18 @@ and prop =
  *)
 
 let rec re_of_formula f =
-  re_of_formula_rec (nnf f)
+  re_of_formula_rec (Ldlsimp.nnf f)
 
 and re_of_formula_rec f =
   match f with
-  | _ when propositional f -> Re_prop (prop_of_formula f)
+  | _ when not @@ modal f -> Re_prop (prop_of_formula f)
   | Ldl_atomic "last" -> Re_prop (prop_of_formula f)  (* work-around*)
   | Ldl_neg f -> Re_neg (re_of_formula f)
   | Ldl_conj fs -> Re_inter (List.map re_of_formula_rec fs)
   | Ldl_disj fs -> Re_union (List.map re_of_formula_rec fs)
   | Ldl_impl (f', g) -> re_of_formula_rec (Ldl_disj [Ldl_neg f'; g])
   | Ldl_modal (m, p, f') -> Re_modal (m, (re_of_path p), re_of_formula_rec f')
-  | _ -> invalid_arg ("re_of_formula_rec: " ^ Ldl.string_of_formula f)
+  | _ -> invalid_arg @@ "[re_of_formula_rec] " ^ Ldl.string_of_formula f
 
 and prop_of_formula = function
   | Ldl_atomic a -> Prop_atomic a
@@ -63,7 +62,7 @@ and prop_of_formula = function
   | Ldl_disj [] -> prop_of_formula (Ldl_atomic "false")
   | Ldl_disj fs -> Prop_disj (List.map prop_of_formula fs)
   | Ldl_impl (f, g) -> Prop_impl ((prop_of_formula f), prop_of_formula g)
-  | Ldl_modal (m, p, f) -> invalid_arg "prop_of_formula"
+  | Ldl_modal (m, p, f) -> invalid_arg "[prop_of_formula]"
 
 and re_of_path = function
   | Path_prop f -> Re_prop (prop_of_formula f)

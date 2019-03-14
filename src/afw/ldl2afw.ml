@@ -1,13 +1,12 @@
 (* $Id: ldl2afw.ml,v 1.3 2017/10/21 07:42:33 sato Exp $ *)
 
 open Ldl
-open Ldlsimp
 open Afw
 open Printf
 
 (** f -> afw *)
 let rec translate (f : formula) =
-  let f' = nnf (canonicalize f) in
+  let f' = Ldlsimp.nnf (Ldlsimp.canonicalize f) in
   let has_last, prop_seq =
     List.fold_left
       (fun (b, names) name ->
@@ -96,14 +95,14 @@ and construct_rec1 m f =
   match f with
 
   (* propositional formula *)
-  | _ when propositional f ->
+  | _ when not @@ modal f ->
       add_to_ex m curr;
       add_to_delta m (curr, Some f, tt);
       add_to_delta m (curr, Some (Ldl_neg f), ff);
 
   | Ldl_atomic _ ->
       failwith "construct_rec1: atomic"
-  | Ldl_neg f' when not (propositional f') ->
+  | Ldl_neg f' when modal f' ->
       failwith "construct_rec1: neg (not supported)"
 
   (* conj -- parallel *)
@@ -150,7 +149,7 @@ and construct_rec1 m f =
   | Ldl_modal (mm, Path_seq (p::ps), f')
     when not (mem curr m.states_ex) ->
       add_to_ex m curr;
-      let g = Ldl_modal (mm, p, canonicalize (Ldl_modal (mm, Path_seq ps, f'))) in
+      let g = Ldl_modal (mm, p, Ldlsimp.canonicalize (Ldl_modal (mm, Path_seq ps, f'))) in
       add_to_delta m (curr, None, g);
       construct_rec m g
 
@@ -189,8 +188,8 @@ and construct_rec1 m f =
     when not (mem curr m.states_ex) ->
       add_to_ex m curr;
 
-      let g = nnf (Ldl_neg p) in
-      let g = canonicalize g in
+      let g = Ldlsimp.nnf (Ldl_neg p) in
+      let g = Ldlsimp.canonicalize g in
       add_to_delta m (curr, None, g);
       construct_rec m g;
 
@@ -211,7 +210,7 @@ and construct_rec1 m f =
 	    add_to_delta m (curr, None, f');
 	    construct_rec m f';
 	    let g = Ldl_modal (Mod_ex, p, Ldl_modal (Mod_ex, Path_star p, f')) in
-	    let g = canonicalize g in
+	    let g = Ldlsimp.canonicalize g in
 	    add_to_delta m (curr, None, g);
 	    construct_rec m g;
       in ()
@@ -229,7 +228,7 @@ and construct_rec1 m f =
 	    add_to_delta m (curr, None, f');
 	    construct_rec m f';
 	    let g = Ldl_modal (Mod_all, p, Ldl_modal (Mod_all, Path_star p, f')) in
-	    let g = canonicalize g in
+	    let g = Ldlsimp.canonicalize g in
 	    add_to_delta m (curr, None, g);
 	    construct_rec m g;
       in ()
@@ -277,7 +276,7 @@ and find_props_in_path rslt = function
   | Path_star p -> find_props_in_path rslt p
 
 and mem f (qs : state list) =
-  assert (f = canonicalize f);
+  assert (f = Ldlsimp.canonicalize f);
   List.mem f qs
 
 and mem_edge (f1, tr, f2) delta =

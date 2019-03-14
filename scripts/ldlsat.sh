@@ -14,8 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+BINDIR=$(readlink -f `dirname $0`)
+LDL2MSO=$BINDIR/ldl2mso
+test -x $LDL2MSO || { echo "$LDL2MSO not found" > /dev/stderr; exit 1; } 
+VERSION=$($LDL2MSO --version)
+
 usage ()
 {
+    echo "ldlsat v$VERSION"
     echo "usage: `basename $0` [<infile>]"
     echo
     echo "`basename $0` is a SAT solver for LDL"
@@ -25,10 +31,6 @@ usage ()
     echo
     exit 0
 }
-
-BINDIR=$(readlink -f `dirname $0`)
-LDL2MSO=$BINDIR/ldl2mso
-test -x $LDL2MSO || { echo "$LDL2MSO not found" > /dev/stderr; exit 1; } 
 
 MONA=mona
 MONAOPTS=
@@ -41,6 +43,10 @@ do
     case $1 in
 	-h | --help)
 	    usage
+	    ;;
+	-V | --version)
+	    echo $VERSION
+	    exit 0
 	    ;;
 	-v | --verbose)
 	    verbose=1

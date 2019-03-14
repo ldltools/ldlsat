@@ -39,6 +39,21 @@ and path =
 (*[@@deriving eq, ord, show, yojson, sexp_of]*)
 (*[@@deriving show { with_path = false }, yojson, eq, ord]*)
 
+(* ================================================================================
+   modality / equality
+   ================================================================================
+ *)
+
+let rec modal f =
+  match f with
+  | Ldl_atomic "last" -> true
+  | Ldl_atomic _ -> false
+  | Ldl_neg g -> modal g
+  | Ldl_conj gs | Ldl_disj gs ->
+      (match List.find_opt modal gs with None -> false | Some _ -> true)
+  | Ldl_impl (g1, g2) -> modal g1 || modal g2
+  | Ldl_modal _ -> true
+
 let rec equal f1 f2 =
   match f1, f2 with
   | Ldl_atomic a1, Ldl_atomic a2

@@ -1,4 +1,3 @@
-(* $Id: ldl2afw.mli,v 1.1 2017/10/21 07:42:33 sato Exp $ *)
 (*
  * (C) Copyright IBM Corp. 2018.
  *
@@ -14,4 +13,8 @@
  * limitations under the License.
  *)
 
-val translate : Ldl.formula -> Afw.afw
+val get : unit -> string
+
+val get_major : unit -> int
+val get_minor : unit -> int
+val get_micro : unit -> int

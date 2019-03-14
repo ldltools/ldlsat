@@ -14,24 +14,8 @@
  * limitations under the License.
  *)
 
-open Ldl
+val canonicalize : Ldl.formula -> Ldl.formula
 
-(** for propositional formulas *)
+val nnf : Ldl.formula -> Ldl.formula
 
-val propositional : formula -> bool
-
-val cnf : formula -> formula
-val dnf : formula -> formula
-val flatten : formula -> formula
-val resolve : formula -> formula
-
-val simp : formula -> formula
-val simp_flatten : formula -> formula
-val simp_equiv : formula -> formula
-val simp_sort : formula -> formula
-val simp_uniq : formula -> formula
-
-(** for ldl formulas *)
-
-val canonicalize : formula -> formula
-val nnf : formula -> formula
+val simp : Ldl.formula -> Ldl.formula

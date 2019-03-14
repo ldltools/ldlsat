@@ -1,4 +1,3 @@
-(* $Id: ldl2afw.mli,v 1.1 2017/10/21 07:42:33 sato Exp $ *)
 (*
  * (C) Copyright IBM Corp. 2018.
  *
@@ -14,4 +13,8 @@
  * limitations under the License.
  *)
 
-val translate : Ldl.formula -> Afw.afw
+let get () = "1.0.4"
+
+let get_major () = 1
+let get_minor () = 0
+let get_micro () = 4

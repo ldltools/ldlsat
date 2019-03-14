@@ -1,6 +1,5 @@
-(* $Id: ldl2afw.mli,v 1.1 2017/10/21 07:42:33 sato Exp $ *)
 (*
- * (C) Copyright IBM Corp. 2018.
+ * (C) Copyright IBM Corp. 2019.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,4 +13,16 @@
  * limitations under the License.
  *)
 
-val translate : Ldl.formula -> Afw.afw
+(* solver *)
+
+val solve : Ldl.formula list -> bool * (string * bool) list
+
+(* helpers *)
+
+val tseitin : ?prefix: string -> Ldl.formula -> Ldl.formula list
+
+(* input/output *)
+
+val dimacs_parse : ?names: string array -> in_channel -> Ldl.formula list
+
+val dimacs_print : ?verbose: bool -> out_channel -> Ldl.formula list -> unit

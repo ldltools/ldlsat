@@ -33,7 +33,9 @@ and path =
   | Path_test of formula
   | Path_star of path
 
-(** equality *)
+(** modality / equality *)
+
+val modal : formula -> bool
 
 val equal : formula -> formula -> bool
 
