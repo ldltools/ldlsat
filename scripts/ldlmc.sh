@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -Ceu -o pipefail
+export LC_ALL=C
+locale -a | fgrep -q en_US.utf8 && LC_ALL=en_US.utf-8
+
 BINDIR=$(readlink -f `dirname $0`)
 LDL2MSO=$BINDIR/ldl2mso
 test -x $LDL2MSO || { echo "$LDL2MSO not found" > /dev/stderr; exit 1; } 
@@ -25,19 +29,24 @@ test -x $LDLSAT || { echo "$LDLSAT not found" > /dev/stderr; exit 1; }
 
 usage ()
 {
-    echo "ldlmc v$VERSION"
-    echo "usage: `basename $0` <model_file> [<infile>]"
-    echo
-    echo "`basename $0` is a model-checker for LDL"
-    echo "`basename $0` reads a LDL model M (from <model_file>) and a LDL formula φ (from <infile>),"
-    echo "examines if M ⊨ φ (i.e., ⊨ M → φ) holds or not, and then returns"
-    echo "either \"claim holds\" (M ⊨ φ holds) or \"claim does not hold\""
-    echo
-    exit 0
+cat <<EOF
+ldlmc (v$VERSION): model-checker for Linear Dynamic Logic
+usage: $(basename $0) <option>* <model_file>? <infile>?
+description:
+  $(basename $0) reads a LDL model M (from <model_file>) and a LDL formula φ (from <infile>),
+  examines if M ⊨ φ (i.e., ⊨ M → φ) holds or not, and then returns
+  either "claim holds" (M ⊨ φ holds) or "claim does not hold"
+options:
+  -m <model_file>	read a LDL model from <model_file>
+  -i <infile>		read a LDL formula from <infile>
+  --reachability	check reachability
+EOF
+exit 0
 }
 
 modelfile=
 infile=/dev/stdin
+outfile=/dev/stdout
 reachability=0
 verbose=0
 
@@ -48,9 +57,20 @@ do
 	-m | --model)
 	    modelfile=$2
 	    shift ;;
+	-i | --input)
+	    infile=$2
+	    shift ;;
+	-)
+	    infile=/dev/stdin
+	    ;;
+	-o | --output)
+	    outfile=$2
+	    shift ;;
+
 	-r | --reach*)
 	    reachability=1
 	    ;;
+
 	-h | --help)
 	    usage
 	    exit 0
@@ -75,8 +95,9 @@ do
 done
 
 test .$modelfile = . && { usage; exit 0; }
-test -e $modelfile || { echo "$modelfile does not exit" > /dev/stderr; exit 1; }
-test -e $infile || { echo "$infile does not exit" > /dev/stderr; exit 1; }
+test -e $modelfile || { echo "$modelfile does not exist" > /dev/stderr; exit 1; }
+test -e $infile || { echo "$infile does not exist" > /dev/stderr; exit 1; }
+test -f $outfile && { echo "$outfile exists" > /dev/stderr; exit 1; }
 
 # --------------------------------------------------------------------------------
 # mc (modelfile, infile)
@@ -91,19 +112,19 @@ test -e $modelfile -a -e $infile || { echo "** error in mc"; exit 1; }
 # LDLGEN (model, input)
 # returns: model ⊨ input (as a single LDL formula)
 # note: "ldl2mso --parse-only" is used for removing comments
-ldlfile=`tempfile -s .ldl`
-cat <<EOF > ${ldlfile} || { echo ";; LDLGEN failed" > /dev/stderr; rm -f $ldlfile; exit 1; }
+ldlfile=`tempfile -p ldlmc -s .ldl`
+cat <<EOF >| ${ldlfile} || { echo ";; LDLGEN failed" > /dev/stderr; rm -f $ldlfile; exit 1; }
 (`${LDL2MSO} $modelfile --parse-only -t ldl`)
-->
-(`${LDL2MSO} $infile --parse-only -t ldl`)
+&
+!(`${LDL2MSO} $infile --parse-only -t ldl`)
 EOF
 
 # LDLSAT
-satoutfile=`tempfile -s .out`
-$LDLSAT $LDLSATOPTS $ldlfile > $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $ldlfile $satoutfile; exit 1; }
+satoutfile=`tempfile -p ldlmc -s .out`
+$LDLSAT $LDLSATOPTS $ldlfile >| $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $ldlfile $satoutfile; exit 1; }
 
 success=0
-test "`head -c 5 $satoutfile`" = "valid" && success=1
+test "`head -c 5 $satoutfile`" = "unsat" && success=1
 rm -f $ldlfile $satoutfile
 
 # silent
@@ -124,8 +145,8 @@ local infile=$2
 test -e $modelfile -a -e $infile || { echo "** error in ra"; exit 1; }
 
 # LDLSAT
-satoutfile=`tempfile -s .out`
-cat <<EOF | $LDLSAT $LDLSATOPTS > $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $satoutfile; exit 1; }
+satoutfile=`tempfile -p ldlmc -s .out`
+cat <<EOF | $LDLSAT $LDLSATOPTS >| $satoutfile || { echo "** $LDLSAT crashed" > /dev/stderr; rm -f $satoutfile; exit 1; }
 (`${LDL2MSO} $modelfile --parse-only -t ldl`)
 &
 (`${LDL2MSO} $infile --parse-only -t ldl`)

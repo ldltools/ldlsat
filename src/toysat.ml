@@ -668,8 +668,8 @@ let solve (clauses : formula list) =
  *)
 
 let dimacs_parse ?(names = [||]) ic =
-  let rec split str =
-    split_rec (str, String.length str) ([], "") 0
+  let rec split line =
+    split_rec (line, String.length line) ([], "") 0
   and split_rec (str, len) (rslt, word) pos =
     if pos >= len then
       rslt @ if word = "" then [] else [word]
@@ -689,18 +689,24 @@ let dimacs_parse ?(names = [||]) ic =
       in
       assert (List.length words >= 4 && List.nth words 1 = "cnf");
       int_of_string (List.nth words 2), int_of_string (List.nth words 3)
-    with End_of_file -> 0, 0
+    with End_of_file -> failwith "[dimacs_parse] no 'p' line detected"
   in    
 
   let names =
-    if names <> [||] then names else
+    if Array.length names >= nvar then names else
     Array.init nvar (fun i -> "p" ^ string_of_int (i + 1))
   in let rec read_clauses (rslt, k) ic =
     try
       let line = input_line ic in
       if line.[0] = 'c' then read_clauses (rslt, k) ic else
-      let words = split line
+      let words : string list = split line
       in let literals =
+	let nword = List.length words
+	in let _ =
+	  (* each line should be 0-terminated *)
+	  if nword <= 1 || List.nth words (nword - 1) <> "0" then
+	    failwith @@ Printf.sprintf "[dimacs_parse] invalid line (%d): %S" k line
+	in
 	List.fold_left
 	  (fun rslt w ->
 	    let i = int_of_string w in
@@ -717,6 +723,8 @@ let dimacs_parse ?(names = [||]) ic =
   in let clauses, nread =
     read_clauses ([], 0) ic
   in
+  if not (nread = ncls) then
+    failwith @@ Printf.sprintf "[dimacs_parse] #line (%d) <> %d" nread ncls;
   assert (nread = ncls);
   clauses
 

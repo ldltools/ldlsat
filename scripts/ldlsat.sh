@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -eu -o pipefail
+export LC_ALL=C
+
 BINDIR=$(readlink -f `dirname $0`)
 LDL2MSO=$BINDIR/ldl2mso
 test -x $LDL2MSO || { echo "$LDL2MSO not found" > /dev/stderr; exit 1; } 
@@ -21,26 +24,41 @@ VERSION=$($LDL2MSO --version)
 
 usage ()
 {
-    echo "ldlsat v$VERSION"
-    echo "usage: `basename $0` [<infile>]"
-    echo
-    echo "`basename $0` is a SAT solver for LDL"
-    echo "`basename $0` reads a LDL formula φ from <infile>,"
-    echo "examines if φ is satisfiable or not, and then returns"
-    echo "either \"valid\" (¬φ is unsatisfiable), \"satisfiable\", or \"unsatisfiable\""
-    echo
-    exit 0
+cat <<EOF
+ldlsat (v$VERSION): BDD-based SAT solver for Linear Dynamic Logic
+usage: $(basename $0) <option>* <infile>?
+options:
+  --validity		check validity (without formula negation)
+  -d			dump BDD
+  -w			generate DFA
+  -o <file>		output to <file>
+EOF
+exit 0
 }
 
 MONA=mona
 MONAOPTS=
 
 infile=/dev/stdin
+outfile=/dev/stdout
 verbose=0
+opt_validity=0
 
 while test $# -gt 0
 do
     case $1 in
+	-)  infile=/dev/stdin
+	    ;;
+	--val*)
+	    opt_validity=1 ;;
+	-[wntsidqefmu] | -o[012] | -g[wscd])
+	    MONAOPTS="$MONAOPTS $1"
+	    ;;
+
+	-o | --output)
+	    outfile=$2
+	    shift ;;
+
 	-h | --help)
 	    usage
 	    ;;
@@ -51,46 +69,55 @@ do
 	-v | --verbose)
 	    verbose=1
 	    ;;
-	-[wntsidqefmu] | -o[012] | -g[wscd])
-	    MONAOPTS="$MONAOPTS $1"
-	    ;;
 	-*)
 	    echo "** unknown option \"$1\" detected"
 	    exit 1
 	    ;;
+
 	*) infile=$1
     esac
     shift
 done
 
 test -e $infile || { echo "$infile not found" > /dev/stderr; exit 1; } 
+#test -f "$outfile" && { echo "\"$outfile\" exists" > /dev/stderr; exit 1; }
+test -f "$outfile" >&- 2>&- && { echo "\"$outfile\" exists" > /dev/stderr; exit 1; }
+# note: without ">&-", rediction like: "ldlsat /dev/stdout > file" fails.
+# cf. to: https://stackoverflow.com/questions/55203566
 
 # --------------------
 # RUN LDL2MSO
 # --------------------
-msofile=`tempfile -s .mso`
+msofile=`tempfile -p ldlsat -s .mso`
 test -f $msofile && rm -f $msofile
 #test $verbose -eq 1 && echo -e ";; LDL2MSO:\t$infile -> $msofile"
-${LDL2MSO} $infile > $msofile || { echo ";; ${LDL2MSO} crashed" > /dev/stderr; rm -f $msofile; exit 1; }
+${LDL2MSO} $infile -o $msofile || { echo ";; ${LDL2MSO} crashed" > /dev/stderr; rm -f $msofile; exit 1; }
 
 # --------------------
 # RUN MONA
 # --------------------
 
-# case: just run mona and terminate
-test $verbose -eq 0 -a ."$MONAOPTS" = . || { $MONA $MONAOPTS $msofile; rm -f $msofile; exit 0; }
+# case: running mona with options specified
+test ."$MONAOPTS" = . || { $MONA $MONAOPTS $msofile > $outfile; rm -f $msofile; exit 0; }
 
-outfile=`tempfile -s .out`
-#test $verbose -eq 1 && echo -e ";; MONA:\t$msofile -> $outfile"
-$MONA -w $msofile > $outfile || { rm -f $outfile; exit 1; }
+#
+rsltfile=`tempfile -p ldlsat -s .out`
+# dfa generation is needed only for checking validity
+test ${opt_validity} -eq 0 && MONAOPTS="" || MONAOPTS="-w"
+$MONA $MONAOPTS $msofile >| $rsltfile || { rm -f $rsltfile $msofile; exit 1; }
 rm -f $msofile
 
 # case: unsatisfiable
-egrep -q '^Formula is unsatisfiable' $outfile && { echo unsatisfiable; rm -f $outfile; exit 0; }
+egrep -q '^Formula is unsatisfiable' $rsltfile \
+    && { echo unsatisfiable > $outfile; rm -f $rsltfile; exit 0; }
+
+# case satisfiable
+test ${opt_validity} -eq 0 \
+    && { echo satisfiable > $outfile; rm -f $rsltfile; exit 0; }
 
 # case: valid (true)
 # ** note: "validity" in LDL_f is slightly different from what people would ususaly suppose.
-cat <<EOF | gawk -v verbose=$verbose -f /dev/stdin $outfile && { echo valid; rm -f $outfile; exit 0; }
+cat <<EOF | gawk -v verbose=$verbose -f /dev/stdin $rsltfile && { echo valid; rm -f $rsltfile; exit 0; }
 /^Initial state:/ { if (\$NF != 0) exit (1); }
 /^Accepting states:/ { if (\$NF != 2) exit (1); }
 /^Rejecting states:/ { if (\$NF != 1) exit (1); }
@@ -103,7 +130,7 @@ cat <<EOF | gawk -v verbose=$verbose -f /dev/stdin $outfile && { echo valid; rm 
 EOF
 
 # case: satisfiable
-echo satisfiable
+echo satisfiable > $outfile
 
-rm -f $outfile
+rm -f $rsltfile
 exit 0
