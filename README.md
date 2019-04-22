@@ -57,6 +57,8 @@ unsatisfiable
 </pre>
 
 Note that formulas should conform to [this grammar](docs/README.md).
+For the usage of _ldlsat_, see [the man page](docs/man/ldlsat.html)
+
 
 # Installation on Docker
 

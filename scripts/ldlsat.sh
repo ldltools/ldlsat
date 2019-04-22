@@ -97,9 +97,10 @@ ${LDL2MSO} $infile -o $msofile || { echo ";; ${LDL2MSO} crashed" > /dev/stderr; 
 # RUN MONA
 # --------------------
 
-# case: running mona with options specified
+# case: running mona without any post-processing when options are specified
 test ."$MONAOPTS" = . || { $MONA $MONAOPTS $msofile > $outfile; rm -f $msofile; exit 0; }
 
+# ---- looking into mona output ----
 #
 rsltfile=`tempfile -p ldlsat -s .out`
 # dfa generation is needed only for checking validity
@@ -114,6 +115,8 @@ egrep -q '^Formula is unsatisfiable' $rsltfile \
 # case satisfiable
 test ${opt_validity} -eq 0 \
     && { echo satisfiable > $outfile; rm -f $rsltfile; exit 0; }
+
+# ---- analyzing generated dfa ----
 
 # case: valid (true)
 # ** note: "validity" in LDL_f is slightly different from what people would ususaly suppose.

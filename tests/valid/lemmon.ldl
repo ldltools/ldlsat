@@ -1,0 +1,18 @@
+// minimal temporal logic Kt by Lemmon
+// axiom schemata
+//
+// - K_G: G(Φ → ψ) → (GΦ → Gψ)
+//   Whatever will always follow from what always will be, always will be
+// - GP: Φ → GPΦ
+//   What is, will always have been
+// - NEC_G: If ⊢ φ then ⊢ Gφ
+//
+// - K_H: H(φ → ψ) → (Hφ → Hψ)
+//   Whatever has always followed from what always has been, always has been
+// - HF: Φ → HFΦ
+//   What is, has always been going to be
+// - NEC_H: If ⊢ φ then ⊢ Hφ
+//
+
+// - K_G: G(Φ → ψ) → (GΦ → Gψ) -- distribution
+[{true}*](p -> q) -> [{true}*]p -> [{true}*]q
