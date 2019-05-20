@@ -13,7 +13,9 @@
  * limitations under the License.
  *)
 
-(* solver *)
+(* propositional SAT solver
+   solve clauses = (satisfiable, model)
+ *)
 
 val solve : Ldl.formula list -> bool * (string * bool) list
 

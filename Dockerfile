@@ -48,7 +48,6 @@ RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     apt-get install -y gawk
 
 COPY --from=builder /usr/local /usr/local
-RUN ldconfig
 
 WORKDIR /root
 CMD ["/bin/bash"]
