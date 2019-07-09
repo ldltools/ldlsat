@@ -24,7 +24,7 @@ veryclean::	clean
 %.xml:	%.tex
 	latexml $< > $@
 
-all::	grammar.pdf grammar.svg grammar.html
+#all::	grammar.pdf grammar.svg grammar.html
 install::
 
 clean::

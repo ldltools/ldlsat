@@ -105,17 +105,17 @@ let formula_of_string str =
    ================================================================================
  *)
 
-let rec string_of_formula ?(fancy=false) f =
+let rec string_of_formula ?(fancy = false) ?(ltl = false) f =
   let str = ref "" in
   let concat str' = str := !str ^ str' in
-  print_formula concat ~fancy f;
+  print_formula concat ~fancy ~ltl f;
   !str
 
-and print_formula out ?(fancy=false) (f : formula) =
+and print_formula out ?(fancy = false) ?(ltl = false) (f : formula) =
   (*print_formula_rec out ~fancy (Ldlsimp.canonicalize f)*)
-  print_formula_rec out ~fancy f
+  print_formula_rec out ~fancy ~ltl f
 
-and print_formula_rec out ?(fancy=false) (f : formula) =
+and print_formula_rec out ?(fancy=false) ?(ltl = false) (f : formula) =
   let top, bot, neg, conj, disj, impl =
     if not fancy
     then "top", "bot", "!", "&", "|", "->"
@@ -138,61 +138,77 @@ and print_formula_rec out ?(fancy=false) (f : formula) =
   | Ldl_atomic "false" when fancy -> out bot
   | Ldl_atomic a -> out a
 
-  | Ldl_neg f' when prec f' <= prec f -> out neg; print_formula_rec out ~fancy f'
-  | Ldl_neg f' -> out (neg ^ "("); print_formula_rec out ~fancy f'; out ")"
+  | Ldl_neg f' when prec f' <= prec f -> out neg; print_formula_rec out ~fancy ~ltl f'
+  | Ldl_neg f' -> out (neg ^ "("); print_formula_rec out ~fancy ~ltl f'; out ")"
 
   | Ldl_conj [] -> out "true"
-  | Ldl_conj [f'] when prec f' <= prec f -> print_formula_rec out ~fancy f'
-  | Ldl_conj [f'] -> out "("; print_formula_rec out ~fancy f'; out ")"
+  | Ldl_conj [f'] when prec f' <= prec f -> print_formula_rec out ~fancy ~ltl f'
+  | Ldl_conj [f'] -> out "("; print_formula_rec out ~fancy ~ltl f'; out ")"
   | Ldl_conj (f' :: fs) when prec f' <= prec f ->
-      print_formula_rec out ~fancy f';
+      print_formula_rec out ~fancy ~ltl f';
       out (" " ^ conj ^ " ");
-      print_formula_rec out ~fancy (Ldl_conj fs)
+      print_formula_rec out ~fancy ~ltl (Ldl_conj fs)
   | Ldl_conj (f' :: fs) ->
-      out "("; print_formula_rec out ~fancy f'; out ")";
+      out "("; print_formula_rec out ~fancy ~ltl f'; out ")";
       out (" " ^ conj ^ " ");
-      print_formula_rec out ~fancy (Ldl_conj fs)
+      print_formula_rec out ~fancy ~ltl (Ldl_conj fs)
 
   | Ldl_disj [] -> out "false"
-  | Ldl_disj [f'] when prec f' <= prec f -> print_formula_rec out ~fancy f'
-  | Ldl_disj [f'] -> out "("; print_formula_rec out ~fancy f'; out ")"
+  | Ldl_disj [f'] when prec f' <= prec f -> print_formula_rec out ~fancy ~ltl f'
+  | Ldl_disj [f'] -> out "("; print_formula_rec out ~fancy ~ltl f'; out ")"
   | Ldl_disj (f' :: fs) when prec f' <= prec f ->
-      print_formula_rec out ~fancy f';
+      print_formula_rec out ~fancy ~ltl f';
       out (" " ^ disj ^ " ");
-      print_formula_rec out ~fancy (Ldl_disj fs)
+      print_formula_rec out ~fancy ~ltl (Ldl_disj fs)
   | Ldl_disj (f' :: fs) ->
-      out "("; print_formula_rec out ~fancy f'; out ")";
+      out "("; print_formula_rec out ~fancy ~ltl f'; out ")";
       out (" " ^ disj ^ " ");
-      print_formula_rec out ~fancy (Ldl_disj fs)
+      print_formula_rec out ~fancy ~ltl (Ldl_disj fs)
 
   | Ldl_impl (f', g) ->
       let _ =
 	match (prec f' < prec f), (prec g <= prec f) with
 	| false, false ->
-	    out "("; print_formula out ~fancy f'; out ")";
+	    out "("; print_formula out ~fancy ~ltl f'; out ")";
 	    out (" " ^ impl ^ " ");
-	    out "("; print_formula out ~fancy g; out ")"
+	    out "("; print_formula out ~fancy ~ltl g; out ")"
 	| false, true  ->
-	    out "("; print_formula out ~fancy f'; out ")";
+	    out "("; print_formula out ~fancy ~ltl f'; out ")";
 	    out (" " ^ impl ^ " ");
-	    print_formula out ~fancy g
+	    print_formula out ~fancy ~ltl g
 	| true, false  ->
-	    print_formula out ~fancy f';
+	    print_formula out ~fancy ~ltl f';
 	    out (" " ^ impl ^ " ");
-	    out "("; print_formula out ~fancy g; out ")"
+	    out "("; print_formula out ~fancy ~ltl g; out ")"
 	| true, true   ->
-	    print_formula out ~fancy f';
+	    print_formula out ~fancy ~ltl f';
 	    out (" " ^ impl ^ " ");
-	    print_formula out ~fancy g
+	    print_formula out ~fancy ~ltl g
       in ()
+
+  | Ldl_modal (m, r, f') when ltl ->
+      let _ =
+	match m, r with
+	| Mod_all, Path_star (Path_prop (Ldl_atomic "true")) ->
+	    out "G"
+	| Mod_ex,  Path_star (Path_prop (Ldl_atomic "true")) ->
+	    out "F"
+	| Mod_ex,  Path_prop (Ldl_atomic "true") ->
+	    out "X"
+	| _ ->
+	    invalid_arg ("[print_formula_rec] " ^ string_of_formula ~fancy f)
+      in
+      if prec f' < prec f
+      then print_formula out ~fancy ~ltl f'
+      else (out "("; print_formula out ~fancy ~ltl f'; out ")")
 
   | Ldl_modal (m, r, f') ->
       out (match m with Mod_all -> "[" | _ -> "<");
-      print_path out ~fancy r;
+      print_path out ~fancy ~ltl r;
       out (match m with Mod_all -> "]" | _ -> ">");
       if prec f' < prec f
-      then print_formula out ~fancy f'
-      else (out "("; print_formula out ~fancy f'; out ")")
+      then print_formula out ~fancy ~ltl f'
+      else (out "("; print_formula out ~fancy ~ltl f'; out ")")
 
 (* precedence: neg < and < lor < implies *)
 and prec = function
@@ -203,48 +219,48 @@ and prec = function
   | Ldl_impl _ -> 300
   | Ldl_modal _ -> 30
 
-and print_path out ?(fancy=false) r =
+and print_path out ?(fancy=false) ?(ltl = false) r =
   match r with
   | Path_prop f ->
-      out "{"; print_formula out ~fancy f; out "}"
+      out "{"; print_formula out ~fancy ~ltl f; out "}"
 
   (* seq *)
   | Path_seq [r'] when path_prec r' <= path_prec r ->
-      print_path out ~fancy r'
+      print_path out ~fancy ~ltl r'
   | Path_seq [r'] ->
-      out "("; print_path out ~fancy r'; out ")"
+      out "("; print_path out ~fancy ~ltl r'; out ")"
   | Path_seq (r' :: rs) when path_prec r' <= path_prec r ->
-      print_path out ~fancy r';
+      print_path out ~fancy ~ltl r';
       out "; ";
-      print_path out ~fancy (Path_seq rs)
+      print_path out ~fancy ~ltl (Path_seq rs)
   | Path_seq (r' :: rs) ->
-      out "("; print_path out ~fancy r'; out ")";
+      out "("; print_path out ~fancy ~ltl r'; out ")";
       out "; ";
-      print_path out ~fancy (Path_seq rs)
+      print_path out ~fancy ~ltl (Path_seq rs)
 
   (* sum *)
   | Path_sum [r'] when path_prec r' <= path_prec r ->
-      print_path out ~fancy r'
+      print_path out ~fancy ~ltl r'
   | Path_sum [r'] ->
-      out "("; print_path out ~fancy r'; out ")"
+      out "("; print_path out ~fancy ~ltl r'; out ")"
   | Path_sum (r' :: rs) when path_prec r' <= path_prec r ->
-      print_path out ~fancy r';
+      print_path out ~fancy ~ltl r';
       out " + ";
-      print_path out ~fancy (Path_sum rs)
+      print_path out ~fancy ~ltl (Path_sum rs)
   | Path_sum (r' :: rs) ->
-      out "("; print_path out ~fancy r'; out ")";
+      out "("; print_path out ~fancy ~ltl r'; out ")";
       out "; ";
-      print_path out ~fancy (Path_sum rs)
+      print_path out ~fancy ~ltl (Path_sum rs)
 
   (* test *)
   | Path_test f ->
-      out "{"; print_formula out ~fancy f; out "}?"
+      out "{"; print_formula out ~fancy ~ltl f; out "}?"
 
   (* star *)
   | Path_star r' when path_prec r' <= path_prec r ->
-      print_path out ~fancy r'; out "*"
+      print_path out ~fancy ~ltl r'; out "*"
   | Path_star r' ->
-      out "("; print_path out ~fancy r'; out ")*"
+      out "("; print_path out ~fancy ~ltl r'; out ")*"
 
 (* precedence: grouping (()) < *, ? < concat (;) < choice (+) *)
 and path_prec = function

@@ -107,6 +107,9 @@ let output_formula oc f = function
   | "ldl" | "unspecified" ->
       Ldl.print_formula (fun s -> output_string oc s; flush_all ()) f;
       output_string oc "\n"
+  | "ltl" ->
+      Ldl.print_formula (fun s -> output_string oc s; flush_all ()) ~ltl: true f;
+      output_string oc "\n"
   | "caml" ->
       output_string oc (Ldl.show_formula f);
       output_string oc "\n";

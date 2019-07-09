@@ -45,8 +45,8 @@ val formula_of_string : string -> formula
 
 (** pretty-printing *)
 
-val print_formula : (string -> unit) -> ?fancy:bool -> formula -> unit
-val string_of_formula : ?fancy:bool -> formula -> string
+val print_formula : (string -> unit) -> ?fancy:bool -> ?ltl:bool -> formula -> unit
+val string_of_formula : ?fancy:bool -> ?ltl:bool -> formula -> string
 
 (** ppx-generated *)
 

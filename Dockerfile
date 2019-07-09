@@ -1,4 +1,4 @@
-FROM debian:stretch-slim as builder
+FROM debian:buster-slim as builder
 #FROM ubuntu:18.04 as builder
 MAINTAINER LDL Tools development team <ldltools@outlook.com>
 
@@ -19,10 +19,10 @@ RUN cd /root;\
     (cd mona-1.4; ./configure --prefix=/usr/local && make && make install-strip);\
     ldconfig
 
-# ocaml
+# opam2/ocaml
 RUN apt-get install -y opam;\
-    opam init -y;\
-    opam switch -y 4.07.0;\
+    opam init -y --disable-sandboxing;\
+    opam switch create 4.07.1;\
     touch /root/.bash_profile && cat /root/.opam/opam-init/init.sh >> /root/.bash_profile
 
 # ldlsat
@@ -38,7 +38,7 @@ CMD ["/bin/bash"]
 # ====================
 # final image
 # ====================
-FROM debian:stretch-slim
+FROM debian:buster-slim
 #FROM ubuntu:18.04
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
