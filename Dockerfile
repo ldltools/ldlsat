@@ -1,5 +1,4 @@
 FROM debian:buster-slim as builder
-#FROM ubuntu:18.04 as builder
 MAINTAINER LDL Tools development team <ldltools@outlook.com>
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -22,7 +21,8 @@ RUN cd /root;\
 # opam2/ocaml
 RUN apt-get install -y opam;\
     opam init -y --disable-sandboxing;\
-    opam switch create 4.07.1;\
+    opam update;\
+    opam switch create 4.08.0;\
     touch /root/.bash_profile && cat /root/.opam/opam-init/init.sh >> /root/.bash_profile
 
 # ldlsat
@@ -30,7 +30,7 @@ ADD . /root/ldlsat
 RUN cd /root/ldlsat;\
     eval `opam config env`;\
     opam install -y ocamlfind ppx_deriving ppx_deriving_yojson;\
-    make veryclean && make && make PREFIX=/usr/local install
+    make veryclean && make && PREFIX=/usr/local make install
 
 WORKDIR /root
 CMD ["/bin/bash"]
@@ -39,7 +39,6 @@ CMD ["/bin/bash"]
 # final image
 # ====================
 FROM debian:buster-slim
-#FROM ubuntu:18.04
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     dpkg-reconfigure -f noninteractive dash;\

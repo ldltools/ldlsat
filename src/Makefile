@@ -24,9 +24,6 @@ CAMLFIND_FLAGS	+= -package ppx_deriving.eq
 CAMLFIND_FLAGS	+= -package ppx_deriving.ord
 CAMLFIND_FLAGS	+= -package ppx_deriving.show
 CAMLFIND_FLAGS	+= -package ppx_deriving_yojson
-#CAMLFIND_FLAGS	+= -package bigstring
-#CAMLFIND_FLAGS	+= -package sexplib
-#CAMLFIND_FLAGS	+= -package ppx_sexp_conv
 
 # on our own
 CAML_INC_FLAGS	=
@@ -36,10 +33,6 @@ CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/ppx_deriving_yojson
 CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/yojson
 CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/biniou
 CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/easy-format
-#CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/bigstring
-#CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/sexplib
-#CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/ppx_sexp_conv
-#CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/xml-light
 
 CAMLCFLAGS	= $(CAMLFIND_FLAGS) $(CAML_INC_FLAGS)
 CAMLOPTFLAGS	= $(CAMLFIND_FLAGS) $(CAML_INC_FLAGS)
@@ -66,15 +59,12 @@ CMAS		=
 #CMAS		+= nums.cma
 CMAS		+= result.cma ppx_deriving_runtime.cma ppx_deriving_yojson_runtime.cma
 CMAS		+= easy_format.cma biniou.cma yojson.cma
-#CMAS		+= unix.cma bigarray.cma bigstring.cma sexplib.cma
-#CMAS		+= ppx_sexp_conv_expander.cma ppx_sexp_conv.cma
-#CMAS		+= xml-light.cma
 
 CMXAS		= $(CMAS:%.cma=%.cmxa)
 
 BINS.byte	= ldl2mso.byte ldlsimp.byte
 #BINS.byte	+= ldl2re.byte re2mso.byte
-#BINS.byte	+= ldl2afw.byte
+BINS.byte	+= ldl2afw.byte
 #BINS.byte	+= afwprint.byte
 #BINS.byte	+= afw2nfa.byte nfa2dfa.byte dfaprint.byte
 #BINS.opt	+= $(BINS.byte:%.byte=%.opt)
@@ -100,6 +90,24 @@ $(BUILD_DIR)/mso/ldl2mso_main.cmo:	mso/ldl2mso_main.ml $(BUILD_DIR)/_export/ldls
 	$(CAMLC) $(CAMLCFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
 $(BUILD_DIR)/mso/ldl2mso_main.cmx:	mso/ldl2mso_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
 	$(CAMLOPT) $(CAMLOPTFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
+# legacy
+$(BUILD_DIR)/ldl2re.byte:	$(LIBS.byte) $(BUILD_DIR)/ldl2re_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+$(BUILD_DIR)/re2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/mso/re2mso_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+
+# ldl2afw
+$(BUILD_DIR)/ldl2afw.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/ldl2afw_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $(LIBS.byte) $^
+$(BUILD_DIR)/ldl2afw.opt:	$(LIBS.opt) $(BUILD_DIR)/afw/ldl2afw_main.cmx
+	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
+$(BUILD_DIR)/afw/ldl2afw_main.cmo:	afw/ldl2afw_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
+	$(CAMLC) $(CAMLCFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
+$(BUILD_DIR)/afw/ldl2afw_main.cmx:	afw/ldl2afw_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
+	$(CAMLOPT) $(CAMLOPTFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
+# legacy
+$(BUILD_DIR)/afwprint.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/afwprint_main.cmo
+	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 
 # ldlsimp
 $(BUILD_DIR)/ldlsimp.byte:	$(LIBS.byte) $(BUILD_DIR)/ldlsimp_main.cmo
@@ -115,7 +123,9 @@ $(BUILD_DIR)/ldlsimp_main.cmx:	ldlsimp_main.ml $(BUILD_DIR)/_export/ldlsat.cmx
 all::	$(LIBS)
 
 # ldlsat library (packed)
-SRC_MODULES	= ldl re mso/mso mso/re2mso toysat ldlsimp version $(BUILD_DIR)/ldl_p ldl_l
+SRC_MODULES	=	ldl re mso/mso mso/re2mso afw/afw afw/ldl2afw
+SRC_MODULES	+=	toysat ldlsimp
+SRC_MODULES	+=	$(BUILD_DIR)/ldl_p ldl_l version
 $(BUILD_DIR)/_export/ldlsat.mli:	$(SRC_MODULES:%=%.mli)
 	mkdir -p $$(dirname $@)
 	rm -f $@; touch $@
@@ -146,15 +156,11 @@ $(BUILD_DIR)/_export/ldlsat.cmx:	$(CMXS) $(BUILD_DIR)/_export/ldlsat.cmi
 $(BUILD_DIR)/_export/ldlsat.cmxa:	$(BUILD_DIR)/_export/ldlsat.cmx
 	$(CAMLOPT) -o $@ -a $<
 
-# legacy
-$(BUILD_DIR)/ldl2re.byte:	$(LIBS.byte) $(BUILD_DIR)/ldl2re_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/re2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/mso/re2mso_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/ldl2afw.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/ldl2afw_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/afwprint.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/afwprint_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
+# lexer/parser
+$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi
+$(BUILD_DIR)/ldl_p.cmo: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi
+$(BUILD_DIR)/ldl_p.cmx: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi
+$(BUILD_DIR)/ldl_l.cmi: $(BUILD_DIR)/ldl_p.cmi
 
 #
 install::	all install_bins install_libs
@@ -168,8 +174,8 @@ install_libs::	all
 	mkdir -p $(PREFIX)/lib/ldlsat
 #	rsync -avzop $(LIBS) $(PREFIX)/lib/ldlsat
 #	rsync -avzop $(CMIS) $(PREFIX)/lib/ldlsat
-	rsync -avzop $(SRCS_mli) $(PREFIX)/lib/ldlsat
-	rsync -avzop $(BUILD_DIR)/_export/ldlsat.{cmi,cma,cmxa,a} $(PREFIX)/lib/ldlsat
+#	rsync -avzop $(SRCS_mli) $(PREFIX)/lib/ldlsat
+	rsync -avzop $(BUILD_DIR)/_export/ldlsat.{mli,cmi,cma,cmxa,a} $(PREFIX)/lib/ldlsat
 
 clean::
 veryclean::
@@ -189,10 +195,6 @@ Makefile.depend::	$(SRCS_mli) $(SRCS_ml) $(SRCS_mll) $(SRCS_mly)
 	 test ."$$line" = . && exit 0;\
 	 break;\
 	done
-	echo "$(BUILD_DIR)/ldl_p.cmi: $(BUILD_DIR)/ldl.cmi" >> $@
-	echo "$(BUILD_DIR)/ldl_p.cmo: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi" >> $@;\
-	echo "$(BUILD_DIR)/ldl_p.cmx: $(BUILD_DIR)/ldl.cmi $(BUILD_DIR)/ldl_p.cmi" >> $@;\
-	echo "$(BUILD_DIR)/ldl_l.cmi: $(BUILD_DIR)/ldl_p.cmi" >> $@
 
 $(BUILD_DIR)/ppx:
 	$(CAMLOPT) $(CAML_INC_FLAGS) \

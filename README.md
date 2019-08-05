@@ -66,11 +66,11 @@ For the usage of _ldlsat_, see [the man page](docs/man/ldlsat.html)
 
 # Installation on Debian/Ubuntu
 ## Prerequisites
-- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.07.0)  
+- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.08.0)  
   run: `apt-get install ocaml`  
   Alternatively, you can install a particular version of the compiler using opam  
   run: `opam switch 4.07.0` for example
-- [opam](https://opam.ocaml.org) (ocaml package manager)  
+- [opam](https://opam.ocaml.org) (ocaml package manager v2.0)  
   run: `apt-get install opam`
 - ocaml packages: ocamlfind, yojson, ppx\_deriving, ppx\_deriving\_yojson  
   for each of these packages,  

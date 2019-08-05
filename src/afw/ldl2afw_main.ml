@@ -1,5 +1,6 @@
 (* $Id: ldl2afw_main.ml,v 1.3 2017/10/21 07:42:33 sato Exp $ *)
 
+open Ldlsat
 open Printf
 
 let stdin = open_in "/dev/stdin"
@@ -120,15 +121,15 @@ let main argc argv =
 
   (* parse a ldl formula *)
   let ic = open_in !infile in
-  let formula = input_formula ic !opt_fmt_in in
+  let f : Ldl.formula = input_formula ic !opt_fmt_in in
   if !opt_parse_only then
     begin
-      output_formula oc formula !opt_fmt_out;
+      output_formula oc f !opt_fmt_out;
       raise Exit
     end;
 
   (* afw *)
-  let afw : Afw.afw = Ldl2afw.translate formula in
+  let afw : Afw.afw = Ldl2afw.translate f in
   output_afw oc afw !opt_fmt_out;
 
   (* clean-up *)

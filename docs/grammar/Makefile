@@ -24,6 +24,9 @@ veryclean::	clean
 %.xml:	%.tex
 	latexml $< > $@
 
+TARGETS = $(shell echo grammar{,_pretty}.{pdf,svg,html})
+grammar:	$(TARGETS)
+
 #all::	grammar.pdf grammar.svg grammar.html
 install::
 

@@ -1,0 +1,42 @@
+\documentclass[preview=true]{standalone}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+%
+\newcommand{\LDL}{\text{LDL}_{f}}
+\newcommand{\eventually}[1]{\left<#1\right>}
+\newcommand{\always}[1]{\left[#1\right]}
+%
+\begin{document}
+\begin{table}[t]
+% --------------------------------------------------------------------------------
+\begin{align*}
+\LDL \textit{formula }
+  \varphi &::=
+  A
+  \mid \neg\varphi
+  \mid \varphi_1 \land \varphi_2
+  \mid \eventually{\rho}\varphi
+\\
+\textit{Proposition }
+  \psi &::= \LDL \textit{formula w/o modality}
+\\
+\textit{Regular path }
+\rho &::=
+  \psi
+  \mid \varphi?
+  \mid \rho_1 + \rho_2
+  \mid \rho_1; \rho_2
+  \mid \rho^\ast
+  \\
+\textit{Atomic proposition }
+A &::=
+  \textbf{true}
+  \mid \textbf{true}
+  \mid \textbf{false}
+  \mid \textit{symbol}
+\end{align*}
+% --------------------------------------------------------------------------------
+\end{table}
+\smallskip
+\end{document}
