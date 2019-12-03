@@ -63,11 +63,6 @@ CMAS		+= easy_format.cma biniou.cma yojson.cma
 CMXAS		= $(CMAS:%.cma=%.cmxa)
 
 BINS.byte	= ldl2mso.byte ldlsimp.byte
-#BINS.byte	+= ldl2re.byte re2mso.byte
-BINS.byte	+= ldl2afw.byte
-#BINS.byte	+= afwprint.byte
-#BINS.byte	+= afw2nfa.byte nfa2dfa.byte dfaprint.byte
-#BINS.opt	+= $(BINS.byte:%.byte=%.opt)
 BINS.opt	= ldl2mso.opt ldlsimp.opt
 BINS		= $(BINS.byte:%=$(BUILD_DIR)/%) $(BINS.opt:%=$(BUILD_DIR)/%)
 
@@ -90,24 +85,6 @@ $(BUILD_DIR)/mso/ldl2mso_main.cmo:	mso/ldl2mso_main.ml $(BUILD_DIR)/_export/ldls
 	$(CAMLC) $(CAMLCFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
 $(BUILD_DIR)/mso/ldl2mso_main.cmx:	mso/ldl2mso_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
 	$(CAMLOPT) $(CAMLOPTFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
-# legacy
-$(BUILD_DIR)/ldl2re.byte:	$(LIBS.byte) $(BUILD_DIR)/ldl2re_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-$(BUILD_DIR)/re2mso.byte:	$(LIBS.byte) $(BUILD_DIR)/mso/re2mso_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
-
-# ldl2afw
-$(BUILD_DIR)/ldl2afw.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/ldl2afw_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $(LIBS.byte) $^
-$(BUILD_DIR)/ldl2afw.opt:	$(LIBS.opt) $(BUILD_DIR)/afw/ldl2afw_main.cmx
-	$(CAMLOPT) $(CAMLOPTFLAGS) -o $@ $(CMXAS) $^
-$(BUILD_DIR)/afw/ldl2afw_main.cmo:	afw/ldl2afw_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
-	$(CAMLC) $(CAMLCFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
-$(BUILD_DIR)/afw/ldl2afw_main.cmx:	afw/ldl2afw_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
-	$(CAMLOPT) $(CAMLOPTFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
-# legacy
-$(BUILD_DIR)/afwprint.byte:	$(LIBS.byte) $(BUILD_DIR)/afw/afwprint_main.cmo
-	$(CAMLC) $(CAMLCFLAGS) -o $@ $(CMAS) $^
 
 # ldlsimp
 $(BUILD_DIR)/ldlsimp.byte:	$(LIBS.byte) $(BUILD_DIR)/ldlsimp_main.cmo
@@ -118,7 +95,6 @@ $(BUILD_DIR)/ldlsimp_main.cmo:	ldlsimp_main.ml $(BUILD_DIR)/_export/ldlsat.cmi
 	$(CAMLC) $(CAMLCFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
 $(BUILD_DIR)/ldlsimp_main.cmx:	ldlsimp_main.ml $(BUILD_DIR)/_export/ldlsat.cmx
 	$(CAMLOPT) $(CAMLCFLAGS) -I $(BUILD_DIR)/_export -o $@ -c $<
-
 
 all::	$(LIBS)
 

@@ -34,7 +34,9 @@ let synopsis prog =
     ["options:\n";
      "  -p\t\t\tterminate after parsing\n";
      "  -o <file>\t\toutput to <file>\n";
-     "  -t <fmt>\t\toutput in <fmt> (\"mso\", \"caml\")\n";
+     "  -t <fmt>\t\toutput in <fmt> (\"json\", \"caml\")\n";
+     "  -u <stage>\t\tterminate when <stage> gets reached\n";
+     "  \t\t\t<stage> ::= ldl | afw | re | mso\n";
      "  -h\t\t\tdisplay this message\n"]
 
 (* input *)
@@ -120,6 +122,19 @@ let output_formula oc f = function
   | _ ->
       failwith "unknown output format"
 
+let rec output_afw oc m = function
+  | "dot" | "graphviz" | "unspecified" ->
+      Afw.output_afw_in_dot oc m
+  | "caml" ->
+      output_string oc (Afw.show_afw m);
+      output_string oc "\n";
+  | "json" ->
+      let json = Afw.afw_to_yojson m in
+      Yojson.Safe.to_channel oc json;
+      output_string oc "\n"
+  | _ ->
+      failwith "unknown output format"
+
 let output_re oc e = function
   | "re" | "unspecified" ->
       Re.print_re (fun s -> output_string oc s; flush_all ()) e;
@@ -156,6 +171,14 @@ let main argc argv =
       match argv.(!i) with
       | "-" ->
 	  infile := "/dev/stdin";
+      | "-o" | "--output" when !i + 1 < argc ->
+	  outfile := argv.(!i+1); incr i;
+
+      | "-s" when !i + 1 < argc ->
+	  opt_fmt_in := argv.(!i+1); incr i;
+      | "-t" when !i + 1 < argc ->
+	  opt_fmt_out := argv.(!i+1); incr i;
+
       | "--ldl" ->
 	  opt_fmt_in := "pretty"
       | "--json" ->
@@ -163,18 +186,13 @@ let main argc argv =
       | "--dimacs" ->
 	  opt_fmt_in := "dimacs"
 
-      | "-o" | "--output" when !i + 1 < argc ->
-	  outfile := argv.(!i+1); incr i;
-      | "-t" when !i + 1 < argc ->
-	  opt_fmt_out := argv.(!i+1); incr i;
-
       | "-p" | "--parse-only" ->
 	  opt_parse_only := true
       | "--nopreamble" ->
 	  
 	  opt_nopreamble := true
       | "-u" | "--until" when !i + 1 < argc ->
-	  if not (List.mem argv.(!i + 1) ["ldl"; "re"; "mso"]) then invalid_arg argv.(!i + 1);
+	  if not (List.mem argv.(!i + 1) ["ldl"; "afw"; "re"; "mso"]) then invalid_arg argv.(!i + 1);
 	  opt_until := argv.(!i + 1); incr i;
 
       | "-v" | "--verbose" ->
@@ -200,13 +218,23 @@ let main argc argv =
 
   (* output *)
   let oc = open_out !outfile in
+  at_exit (fun _ -> close_out oc);
 
   (* parse a ldl formula *)
   let ic = open_in !infile in
+  at_exit (fun _ -> close_in ic);
   let f = input_formula ic !opt_fmt_in in
   if !opt_parse_only || !opt_until = "ldl" then
     begin
       output_formula oc f !opt_fmt_out;
+      raise Exit
+    end;
+
+  (* ldl -> afw *)
+  if !opt_until = "afw" then
+    begin
+      let m : Afw.afw = Ldl2afw.translate f in
+      output_afw oc m !opt_fmt_out;
       raise Exit
     end;
 
@@ -217,7 +245,6 @@ let main argc argv =
       output_re oc e !opt_fmt_out;
       raise Exit
     end;
-
 
   (* re -> mso *)
   let p : Mso.prog = Re2mso.re2mso e in

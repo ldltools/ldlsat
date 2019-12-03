@@ -2,7 +2,7 @@
 
 [*ldlsat*](https://github.com/ldltools/ldlsat) is a SAT solver for
 [LDL<sub>f</sub>](https://www.cs.rice.edu/~vardi/),
-an extension of [LTL](https://en.wikipedia.org/wiki/Linear_temporal_logic).
+an extension of [LTL](https://en.wikipedia.org/wiki/Linear_temporal_logic) on finite traces.
 
 For each input LDL<sub>f</sub> formula,
 _ldlsat_ first translates it to
@@ -66,10 +66,10 @@ For the usage of _ldlsat_, see [the man page](docs/man/ldlsat.html)
 
 # Installation on Debian/Ubuntu
 ## Prerequisites
-- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.08.0)  
+- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.08.1)  
   run: `apt-get install ocaml`  
   Alternatively, you can install a particular version of the compiler using opam  
-  run: `opam switch 4.07.0` for example
+  run: `opam switch 4.08.1` for example
 - [opam](https://opam.ocaml.org) (ocaml package manager v2.0)  
   run: `apt-get install opam`
 - ocaml packages: ocamlfind, yojson, ppx\_deriving, ppx\_deriving\_yojson  

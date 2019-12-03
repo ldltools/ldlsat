@@ -22,7 +22,7 @@ RUN cd /root;\
 RUN apt-get install -y opam;\
     opam init -y --disable-sandboxing;\
     opam update;\
-    opam switch create 4.08.0;\
+    opam switch create 4.08.1;\
     touch /root/.bash_profile && cat /root/.opam/opam-init/init.sh >> /root/.bash_profile
 
 # ldlsat
