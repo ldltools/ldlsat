@@ -37,8 +37,9 @@ CAML_INC_FLAGS	+= -I $(OPAM_PREFIX)/lib/easy-format
 CAMLCFLAGS	= $(CAMLFIND_FLAGS) $(CAML_INC_FLAGS)
 CAMLOPTFLAGS	= $(CAMLFIND_FLAGS) $(CAML_INC_FLAGS)
 
-CAMLCFLAGS	+= -unsafe-string 
-CAMLOPTFLAGS	+= -unsafe-string
+# ocaml 4.10 no longer supports unsafe-string
+#CAMLCFLAGS	+= -unsafe-string 
+#CAMLOPTFLAGS	+= -unsafe-string
 
 ifdef DEBUG
 CAMLCFLAGS	+= -g -w +A

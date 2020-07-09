@@ -60,13 +60,13 @@ let rec input_formula ic = function
 	    really_input ic str 0 1024;
 	  done
 	with End_of_file -> () in
-      let str' = Bytes.concat "" !lst in
-      let str' = Bytes.sub str' 0 (Bytes.index str' (Char.chr 0)) in
-      formula_from_string str' "unspecified"
+      let str' : bytes = Bytes.concat (Bytes.of_string "") !lst in
+      let str' : bytes = Bytes.sub str' 0 (Bytes.index str' (Char.chr 0)) in
+      formula_from_string (Bytes.to_string str') "unspecified"
   | fmt ->
       failwith ("unknown format: " ^ fmt)
 
-and formula_from_string str = function
+and formula_from_string (str : string) = function
   | "ldl" | "pretty" ->
       Ldl_p.formula Ldl_l.token (Lexing.from_string str)
   | "json" ->
@@ -75,12 +75,12 @@ and formula_from_string str = function
 	Ok f -> f | Error msg -> failwith msg)
   | "dimacs" ->
       dimacs_parse str
-  | "unspecified" when Bytes.length str < 6 ->
+  | "unspecified" when String.length str < 6 ->
       formula_from_string str "pretty"
   | "unspecified" ->
-      if Bytes.sub str 0 6 = "[\"Ldl_" then
+      if String.sub str 0 6 = "[\"Ldl_" then
 	formula_from_string str "json"
-      else if looks_like_dimacs str (Bytes.length str) 0 then
+      else if looks_like_dimacs str (String.length str) 0 then
 	dimacs_parse str
       else
 	formula_from_string str "pretty"

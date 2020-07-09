@@ -13,16 +13,17 @@ RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
 
 # mona
 RUN cd /root;\
-    wget -q http://www.brics.dk/mona/download/mona-1.4-17.tar.gz;\
-    tar xzf mona-1.4-17.tar.gz;\
+    wget -q http://www.brics.dk/mona/download/mona-1.4-18.tar.gz;\
+    tar xzf mona-1.4-18.tar.gz;\
     (cd mona-1.4; ./configure --prefix=/usr/local && make && make install-strip);\
     ldconfig
 
 # opam2/ocaml
+# note: opam2 activates sandboxing by default, which needs the "bubblewrap" package.
 RUN apt-get install -y opam;\
     opam init -y --disable-sandboxing;\
     opam update;\
-    opam switch create 4.08.1;\
+    opam switch create 4.10.0;\
     touch /root/.bash_profile && cat /root/.opam/opam-init/init.sh >> /root/.bash_profile
 
 # ldlsat

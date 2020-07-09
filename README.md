@@ -66,17 +66,17 @@ For the usage of _ldlsat_, see [the man page](docs/man/ldlsat.html)
 
 # Installation on Debian/Ubuntu
 ## Prerequisites
-- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.08.1)  
+- [ocaml](https://ocaml.org) (v4.05 or higher. tested with 4.10.0)  
   run: `apt-get install ocaml`  
   Alternatively, you can install a particular version of the compiler using opam  
-  run: `opam switch 4.08.1` for example
+  run: `opam switch create 4.10.0` for example
 - [opam](https://opam.ocaml.org) (ocaml package manager v2.0)  
   run: `apt-get install opam`
 - ocaml packages: ocamlfind, yojson, ppx\_deriving, ppx\_deriving\_yojson  
   for each of these packages,  
   run: `opam install package`
 - [mona](http://www.brics.dk/mona/) (v1.4)  
-  run: `wget http://www.brics.dk/mona/download/mona-1.4-17.tar.gz`  
+  run: `wget http://www.brics.dk/mona/download/mona-1.4-18.tar.gz`  
   expand the archive, and build/install the tool as is instructed.
 - [graphviz](http://www.graphviz.org/) (optional)  
   run: `apt-get install graphviz`

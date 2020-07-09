@@ -11,3 +11,4 @@ CHANGES.html
 *.dot
 *.png
 *.json
+*.tar*
