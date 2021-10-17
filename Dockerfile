@@ -1,9 +1,12 @@
-FROM debian:buster-slim as builder
+FROM debian:bullseye-slim as builder
 MAINTAINER LDL Tools development team <ldltools@outlook.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV DEBIAN_PRIORITY critical
 ENV DEBCONF_NOWARNINGS yes
+
+ENV OCAML_VERSION "4.12.0"
+ENV MONA_VERSION "1.4-18"
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     dpkg-reconfigure -f noninteractive dash;\
@@ -11,19 +14,21 @@ RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     apt-get update;\
     apt-get install -y build-essential flex bison gawk file rsync wget
 
-# mona
+# mona (http://www.brics.dk/mona)
 RUN cd /root;\
-    wget -q http://www.brics.dk/mona/download/mona-1.4-18.tar.gz;\
-    tar xzf mona-1.4-18.tar.gz;\
-    (cd mona-1.4; ./configure --prefix=/usr/local && make && make install-strip);\
+    wget -q http://www.brics.dk/mona/download/mona-${MONA_VERSION}.tar.gz;\
+    mkdir -p mona; cd mona;\
+    tar --strip-components=1 -xzf ../mona-${MONA_VERSION}.tar.gz;\
+    (./configure --prefix=/usr/local && make && make install-strip);\
     ldconfig
 
 # opam2/ocaml
 # note: opam2 activates sandboxing by default, which needs the "bubblewrap" package.
-RUN apt-get install -y opam;\
+RUN cd /root;\
+    apt-get install -y opam;\
     opam init -y --disable-sandboxing;\
     opam update;\
-    opam switch create 4.10.0;\
+    opam switch create ${OCAML_VERSION};\
     touch /root/.bash_profile && cat /root/.opam/opam-init/init.sh >> /root/.bash_profile
 
 # ldlsat
@@ -39,7 +44,7 @@ CMD ["/bin/bash"]
 # ====================
 # final image
 # ====================
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections;\
     dpkg-reconfigure -f noninteractive dash;\

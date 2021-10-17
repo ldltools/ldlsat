@@ -52,7 +52,8 @@ CAMLYACC	?= ocamlyacc -v
 #
 $(BUILD_DIR)/%.cmi: %.mli
 	$(MKDIR_P) $(dir $@)
-	$(CAMLC) $(CAMLCFLAGS) -c -o $@ $<
+#	$(CAMLC) $(CAMLCFLAGS) -c -o $@ $<
+	$(CAMLC) $(CAMLCFLAGS) $(FOR_PACK) -c -o $@ $<
 $(BUILD_DIR)/%.cmo: %.ml
 	$(MKDIR_P) $(dir $@)
 	$(CAMLC) $(CAMLCFLAGS) $(FOR_PACK) -c -o $@ $<
