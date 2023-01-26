@@ -57,10 +57,10 @@ val pp_formula : Format.formatter -> formula -> unit
 val pp_modality : Format.formatter -> modality -> unit
 val show_formula : formula -> string
 
-val formula_of_yojson : Yojson.Safe.json -> (formula, string) Result.result
-val formula_to_yojson : formula -> Yojson.Safe.json
-val modality_to_yojson : modality -> Yojson.Safe.json
-val modality_of_yojson : Yojson.Safe.json -> (modality, string) Result.result
+val formula_of_yojson : Yojson.Safe.t -> (formula, string) Result.result
+val formula_to_yojson : formula -> Yojson.Safe.t
+val modality_to_yojson : modality -> Yojson.Safe.t
+val modality_of_yojson : Yojson.Safe.t -> (modality, string) Result.result
 
 (*
 val sexp_of_formula : formula -> Sexplib.Sexp.t

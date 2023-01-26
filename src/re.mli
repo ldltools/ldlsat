@@ -45,5 +45,5 @@ val string_of_re : re -> string
 val pp_re : Format.formatter -> re -> unit
 val show_re : re -> string
 
-val re_of_yojson : Yojson.Safe.json -> (re, string) Result.result
-val re_to_yojson : re -> Yojson.Safe.json
+val re_of_yojson : Yojson.Safe.t -> (re, string) Result.result
+val re_to_yojson : re -> Yojson.Safe.t

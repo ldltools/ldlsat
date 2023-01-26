@@ -43,9 +43,9 @@ val pp_assignment : Format.formatter -> assignment -> unit
 val show_afw : afw -> string
 val show_state : state -> string
 
-val afw_of_yojson : Yojson.Safe.json -> (afw, string) Result.result
-val afw_to_yojson : afw ->  Yojson.Safe.json
-val state_of_yojson : Yojson.Safe.json -> (state, string) Result.result
-val state_to_yojson : state ->  Yojson.Safe.json
-val assignment_of_yojson : Yojson.Safe.json -> (assignment, string) Result.result
-val assignment_to_yojson : assignment ->  Yojson.Safe.json
+val afw_of_yojson : Yojson.Safe.t -> (afw, string) Result.result
+val afw_to_yojson : afw ->  Yojson.Safe.t
+val state_of_yojson : Yojson.Safe.t -> (state, string) Result.result
+val state_to_yojson : state ->  Yojson.Safe.t
+val assignment_of_yojson : Yojson.Safe.t -> (assignment, string) Result.result
+val assignment_to_yojson : assignment ->  Yojson.Safe.t

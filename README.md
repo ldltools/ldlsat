@@ -23,26 +23,6 @@ unsatisfiable
 </code>
 </pre>
 
-## LTL / Modal
-
-<pre>
-<code>
-$ echo '[{true}*]a -> a' | ldlsat
-valid
-$ echo '[{true}](a -> b) -> [{true}]a -> [{true}]b' | ldlsat  ## distribution (K)
-valid
-$ echo '[{true}]a -> a' | ldlsat  ## reflexitivity (T)
-satisfiable
-$ echo 'a -> [{true}]<{true}>a' | ldlsat  ## symmetry (B)
-satisfiable
-</code>
-</pre>
-
-Note
-
-- [] and <> in LTL are equivalent with [{true}\*] and <{true}\*> in LDL, respectively.
-- [] and <> in standard propositional modal logics correspond with [{true}] and <{true}> in LDL, respectively.
-
 ## LDL<sub>f</sub>
 
 <pre>
@@ -58,6 +38,33 @@ unsatisfiable
 
 Note that formulas should conform to [this grammar](docs/README.md).
 For the usage of _ldlsat_, see [the man page](docs/man/ldlsat.html)
+
+## LTL
+
+<pre>
+<code>
+$ echo '[{true}*]a -> a' | ldlsat
+valid
+</code>
+</pre>
+
+<pre>
+<code>
+$ echo '[{true}](a -> b) -> [{true}]a -> [{true}]b' | ldlsat
+valid
+$ echo '[{true}]a -> a' | ldlsat
+satisfiable
+$ echo 'a -> [{true}]<{true}>a' | ldlsat
+satisfiable
+</code>
+</pre>
+
+
+Note
+
+- [] and <> in LTL are equivalent with [{true}\*] and <{true}\*> in LDL, respectively.
+- [] and <> in standard propositional modal logics correspond with [{true}] and <{true}> in LDL, respectively.
+- The last 3 formulas are for normal modal logics (K/T/B) and make little sense when interpreted as LDL formulas.
 
 
 # Installation on Docker
